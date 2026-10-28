@@ -266,7 +266,7 @@ export default function Music({ data, setData, notify, readOnly }) {
                     </a>
                     :
                   </small>
-                  <code>{location.origin}/</code>
+                  <code>{new URL(import.meta.env.BASE_URL, location.origin).href}</code>
                   <small>
                     Reprodução com Spotify Premium. A autorização fica neste
                     navegador.

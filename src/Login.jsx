@@ -71,7 +71,7 @@ export default function Login({ onReady }) {
     <div className="login-page">
       <div className="login-glow" />
       <header className="login-header">
-        <a href="/" className="login-brand">
+        <a href={import.meta.env.BASE_URL} className="login-brand">
           <span>
             <Command size={24} />
           </span>

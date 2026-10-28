@@ -311,7 +311,7 @@ export default function useSpotify(active) {
           throw new Error("Configure o Client ID público do Spotify primeiro.");
         const verifier = base64(crypto.getRandomValues(new Uint8Array(64))),
           oauthState = base64(crypto.getRandomValues(new Uint8Array(24))),
-          redirectUri = location.origin + "/";
+          redirectUri = new URL(import.meta.env.BASE_URL, location.origin).href;
         const challenge = base64(
           await crypto.subtle.digest(
             "SHA-256",

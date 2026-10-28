@@ -457,7 +457,7 @@ export default function App({ session, onSignOut }) {
                         ? "ERRO AO SALVAR"
                         : "SALVO NA NUVEM"}
               </span>
-              <a href="/" className="account-button">
+              <a href={import.meta.env.BASE_URL} className="account-button">
                 REACT 2.0
               </a>
               <div className="search">

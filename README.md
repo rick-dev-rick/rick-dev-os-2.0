@@ -34,3 +34,11 @@ Cofre, notas e transações do protótipo são locais; não são enviados ao ban
 Ver `docs/native-react-verification.md`. O fluxo guest foi testado com as listas reais. A escrita autenticada ponta a ponta não foi testada: revisão automática bloqueou a simulação de uma sessão ADM no SQL e o teste não foi repetido. A função foi instalada e seus privilégios/RLS e lógica de comparação foram verificados com consultas sem escrita.
 
 A autorização Spotify exige configuração do Client ID/Redirect URI e uma conta com os recursos exigidos pelo serviço. A reprodução autenticada não foi testada pelo agente.
+
+## GitHub Pages
+
+Endereço de publicação: https://rick-dev-rick.github.io/rick-dev-os-2.0/
+
+Em Settings → Pages → Build and deployment → Source, selecione **GitHub Actions**. O workflow `.github/workflows/deploy-pages.yml` testa e publica somente `dist/` a cada push na `main`. Também pode ser iniciado em Actions → Publicar RICK_DEV OS no GitHub Pages → Run workflow.
+
+O caminho base é aplicado automaticamente no GitHub Actions; builds locais e a hospedagem anterior continuam usando `/`. No Spotify Dashboard, cadastre também o Redirect URI `https://rick-dev-rick.github.io/rick-dev-os-2.0/` para usar o player autenticado nesse domínio.
