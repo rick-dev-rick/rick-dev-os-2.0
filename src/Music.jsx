@@ -181,13 +181,12 @@ export default function Music({ data, setData, notify, readOnly }) {
                   }
                   disabled={
                     !spotify.connected ||
-                    spotify.busy ||
-                    (!now && !spotifySource(source || track?.url))
+                    spotify.busy
                   }
                   onClick={() =>
                     now && spotify.ready
                       ? spotify.toggle()
-                      : spotify.start(source || track?.url)
+                      : spotify.start()
                   }
                 >
                   {spotify.state && !spotify.state.paused ? (
@@ -284,7 +283,7 @@ export default function Music({ data, setData, notify, readOnly }) {
                     spotify.start(source || track?.url);
                   }}
                 >
-                  <label htmlFor="spotify-source">O que vamos ouvir?</label>
+                  <label htmlFor="spotify-source">Tocar um link específico (opcional)</label>
                   <div>
                     <input
                       id="spotify-source"

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { playSpotifyAccount } from "./spotify-account.mjs";
 import {
-  spotifySource,
   validOAuthCallback,
   oauthReturnUrl,
 } from "./music-helpers.mjs";
@@ -82,6 +82,7 @@ export default function useSpotify(active) {
       accessToken: json.access_token,
       refreshToken: json.refresh_token || old,
       expiresAt: Date.now() + json.expires_in * 1000,
+      scope: json.scope || read(TOKEN)?.scope || "",
     };
     sessionStorage.setItem(TOKEN, JSON.stringify(value));
     setConnected(true);
@@ -123,13 +124,14 @@ export default function useSpotify(active) {
         ...(payload ? { body: JSON.stringify(payload) } : {}),
       });
       if (!response.ok)
-        throw new Error(
+        throw Object.assign(new Error(
           response.status === 403
             ? "O Spotify exige Premium e permissão deste app para reproduzir."
             : response.status === 429
               ? "Aguarde um momento antes de tentar novamente."
               : "Não foi possível controlar o Spotify. Reconecte e tente novamente.",
-        );
+        ), { status: response.status });
+      if (response.status !== 204 && method === "GET") return response.json();
     },
     [accessToken],
   );
@@ -157,7 +159,7 @@ export default function useSpotify(active) {
     })
       .then((json) => {
         storeToken(json);
-        setStatus("Spotify conectado. Escolha uma faixa e dê Play.");
+        setStatus("Spotify conectado. Aperte Play para ouvir aqui.");
       })
       .catch((e) => setStatus(e.message))
       .finally(() => setBusy(false));
@@ -274,6 +276,14 @@ export default function useSpotify(active) {
     });
     return initializing.current;
   }
+  useEffect(() => {
+    if (!connected || !active) return;
+    const current = generation.current;
+    // Prepare the SDK without starting or transferring any audio.
+    ensurePlayer().catch((error) => {
+      if (current === generation.current) setStatus(error.message);
+    });
+  }, [connected, active, clientId]);
   const run = async (action) => {
     if (busy) return;
     setBusy(true);
@@ -338,37 +348,33 @@ export default function useSpotify(active) {
           code_challenge_method: "S256",
           code_challenge: challenge,
           scope:
-            "streaming user-read-email user-read-private user-read-playback-state user-modify-playback-state",
+            "streaming user-read-email user-read-private user-read-playback-state user-modify-playback-state user-read-recently-played",
         });
         location.assign(url.href);
       }),
     disconnect,
-    start: (value) =>
-      run(async () => {
-        const source = spotifySource(value);
-        if (!source)
-          throw new Error(
-            "Use um link oficial de faixa, álbum ou playlist do Spotify.",
-          );
+    start: (value) => {
+      // Invoke activation synchronously in the click gesture (including iOS).
+      const instance = player.current;
+      const activation = instance?.activateElement?.();
+      return run(async () => {
+        if (!instance) {
+          await ensurePlayer();
+          throw new Error("Player pronto. Aperte Play para liberar o áudio neste navegador.");
+        }
+        await activation;
         const current = generation.current;
         const id = await ensurePlayer();
-        if (current !== generation.current || !activeRef.current) return;
-        await player.current.activateElement?.();
-        await api("/me/player", "PUT", { device_ids: [id], play: false });
-        if (current !== generation.current || !activeRef.current) return;
-        await api(
-          "/me/player/play?device_id=" + encodeURIComponent(id),
-          "PUT",
-          source,
-        );
-        if (current !== generation.current || !activeRef.current) {
-          await player.current?.pause();
-        }
-      }),
+        const isCurrent = () => current === generation.current && activeRef.current;
+        if (!isCurrent()) return;
+        await playSpotifyAccount({api, deviceId:id, value, isCurrent});
+        if (!isCurrent()) await player.current?.pause();
+      });
+    },
     toggle: () =>
       run(async () => {
         if (!player.current || !ready)
-          throw new Error("Cole um link e toque para iniciar.");
+          throw new Error("Aperte Play para preparar o áudio neste navegador.");
         await player.current.activateElement?.();
         await player.current.togglePlay();
       }),
