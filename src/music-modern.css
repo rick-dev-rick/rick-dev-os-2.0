@@ -1,0 +1,293 @@
+.native-music.music-dock {
+  width: 350px;
+  max-width: calc(100vw - 32px);
+  background: #171a20;
+  border: 1px solid #343b41;
+  border-radius: 17px;
+  box-shadow: 0 12px 50px #0008;
+  overflow: hidden;
+  color: #d9e2dd;
+}
+.native-music .music-dock-heading {
+  padding: 16px 18px;
+  gap: 12px;
+}
+.native-music .music-dock-heading > div {
+  min-width: 0;
+  flex: 1;
+}
+.native-music .music-dock-heading strong {
+  font-size: 11px;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.native-music .music-dock-heading small {
+  font-size: 7px;
+  letter-spacing: 1px;
+  margin-top: 5px;
+  color: #93a38f;
+}
+.native-music .music-badge {
+  background: #c2fa7519;
+  color: #c2fa75;
+  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+}
+.music-live-dot {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #9bc66a;
+  margin: 0 4px 1px;
+}
+.native-music .music-dock-body {
+  padding: 0 18px 17px;
+  max-height: min(77vh, 760px);
+  overflow: auto;
+}
+.native-music .music-dock-body[hidden] {
+  display: none;
+}
+.native-music .music-player-tabs {
+  gap: 5px;
+  padding: 4px;
+  border-radius: 9px;
+  background: #0e1116;
+}
+.native-music .music-player-tabs button {
+  border: 0;
+  background: transparent;
+  border-radius: 6px;
+  color: #819085;
+  font-size: 10px;
+  padding: 9px;
+}
+.native-music .music-player-tabs button.selected {
+  color: #d7f4bc;
+  background: #283520;
+}
+.native-track {
+  display: flex;
+  gap: 13px;
+  align-items: center;
+  margin: 21px 0 12px;
+}
+.native-art {
+  width: 62px;
+  height: 62px;
+  flex: none;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #35482b, #1c2722);
+  color: #c2fa75;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.native-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.native-track > div:last-child {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+.native-track small {
+  font-size: 7px;
+  letter-spacing: 1px;
+  color: #82a169;
+}
+.native-track strong {
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.native-track span {
+  font-size: 10px;
+  color: #89958d;
+}
+.native-progress input {
+  width: 100%;
+  height: 4px;
+  padding: 0;
+  accent-color: #c2fa75;
+  cursor: pointer;
+}
+.native-progress > div {
+  display: flex;
+  justify-content: space-between;
+  color: #77857a;
+  font-size: 9px;
+  margin-top: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.native-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 21px;
+  margin: 13px 0;
+  position: relative;
+}
+.native-controls .icon {
+  color: #d4dfd3;
+}
+.native-play {
+  border: 0;
+  border-radius: 50%;
+  width: 43px;
+  height: 43px;
+  display: grid;
+  place-items: center;
+  color: #1b2b12;
+  background: #c2fa75;
+}
+.native-controls .native-settings {
+  position: absolute;
+  right: 0;
+  color: #82907f;
+}
+.native-music button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.native-status {
+  font-size: 10px;
+  color: #96a78f;
+  line-height: 1.5;
+  margin: 12px 0;
+}
+.native-connect {
+  border: 1px solid #739c4e;
+  background: #c2fa7514;
+  color: #c2fa75;
+  border-radius: 8px;
+  width: 100%;
+  padding: 10px;
+  font-size: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 9px;
+}
+.native-config {
+  margin-top: 14px;
+  padding: 13px;
+  background: #0f1316;
+  border: 1px solid #2c3830;
+  border-radius: 10px;
+  display: grid;
+  gap: 9px;
+}
+.native-config label,
+.native-source label {
+  font-size: 9px;
+  color: #a1b396;
+  display: grid;
+  gap: 8px;
+}
+.native-music input,
+.native-library select {
+  width: 100%;
+  min-width: 0;
+  background: #11161a;
+  border: 1px solid #354238;
+  color: #d3dfcc;
+  padding: 10px;
+  border-radius: 7px;
+  font-size: 10px;
+  outline-offset: 3px;
+}
+.native-config small {
+  font-size: 8px;
+  line-height: 1.6;
+  color: #7e917d;
+}
+.native-config a {
+  color: #b5d79a;
+}
+.native-config code {
+  font-size: 9px;
+  overflow-wrap: anywhere;
+  color: #cadbbf;
+}
+.native-config .secondary {
+  font-size: 9px;
+}
+.native-source {
+  margin-top: 15px;
+}
+.native-source > div {
+  display: flex;
+  gap: 7px;
+  margin-top: 8px;
+}
+.native-source .icon {
+  border: 1px solid #3b5133;
+  border-radius: 7px;
+  background: #283d22;
+  flex: none;
+}
+.native-library {
+  margin-top: 17px;
+  border-top: 1px solid #2c342d;
+  padding-top: 10px;
+}
+.native-library-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #83977c;
+  font-size: 8px;
+  letter-spacing: 1.2px;
+  margin-bottom: 6px;
+}
+.native-music .music-dock-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 9px;
+}
+.native-music .text-button {
+  font-size: 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #a5c18f;
+}
+.native-library > .text-button {
+  margin-top: 10px;
+}
+.native-music iframe {
+  border: 0;
+  border-radius: 10px;
+  margin-top: 7px;
+  display: block;
+}
+.native-music .music-tip {
+  display: block;
+  font-size: 8px;
+  line-height: 1.6;
+  margin-top: 10px;
+  color: #778d73;
+}
+.native-music button:focus-visible,
+.native-music a:focus-visible {
+  outline: 2px solid #c2fa75;
+  outline-offset: 3px;
+}
+@media (max-width: 650px) {
+  .native-music.music-dock {
+    right: 16px;
+    bottom: 16px;
+    width: 320px;
+  }
+  .native-music .music-dock-body {
+    max-height: 70vh;
+  }
+}

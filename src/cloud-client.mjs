@@ -1,0 +1,4 @@
+import {createClient} from '@supabase/supabase-js';import {fromLegacyData} from './legacy.mjs';
+export const client=createClient('https://igegubykvwmpxcfduxnz.supabase.co','sb_publishable_tHx4hGOgGOg4SpcEn7f-LQ_H5fG1Fcw',{auth:{storageKey:'rick-os-2-supabase-auth'}});
+export async function loadCloud(){const {data:row,error}=await client.from('rick_dev_state').select('data,updated_at').eq('id',1).maybeSingle();if(error||!row)throw Error('Não foi possível carregar suas listas. Confira a conexão e tente novamente.');return {data:fromLegacyData(row.data||{}),raw:row.data||{},updatedAt:row.updated_at};}
+export async function verifiedAdmin(){const {data:{user},error}=await client.auth.getUser();if(error||!user)return null;const {data:permission,error:permissionError}=await client.from('rick_dev_admins').select('user_id').eq('user_id',user.id).maybeSingle();return !permissionError&&permission?user:null;}
