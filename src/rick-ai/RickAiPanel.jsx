@@ -1,8 +1,38 @@
-import React, { useMemo, useState } from 'react';
-import { Bot, Check, LoaderCircle, MessageCircle, Send, X } from 'lucide-react';
+import React, { useMemo, useRef, useState } from 'react';
+import {
+  Bot,
+  Check,
+  LoaderCircle,
+  MessageCircle,
+  Mic,
+  MicOff,
+  Send,
+  Volume2,
+  VolumeX,
+  X,
+} from 'lucide-react';
 import { applyConfirmedAction, buildRickAiSnapshot } from './contracts.mjs';
-import { sendRickAiMessage } from './client.mjs';
+import { sendRickAiMessage, speakRickAiText, transcribeRickAiAudio } from './client.mjs';
 import './rick-ai.css';
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(Error('Não consegui preparar a gravação.'));
+    reader.onloadend = () => {
+      const value = String(reader.result || '');
+      resolve(value.includes(',') ? value.split(',')[1] : value);
+    };
+    reader.readAsDataURL(blob);
+  });
+}
+
+function audioUrlFromBase64(audioBase64, mimeType) {
+  const binary = atob(audioBase64);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+  return URL.createObjectURL(new Blob([bytes], { type: mimeType }));
+}
 
 export default function RickAiPanel({ data, page, role, setData, notify }) {
   const [open, setOpen] = useState(false);
@@ -15,25 +45,69 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
+  const [recording, setRecording] = useState(false);
+  const [voiceBusy, setVoiceBusy] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const recorderRef = useRef(null);
+  const chunksRef = useRef([]);
+  const streamRef = useRef(null);
+  const audioRef = useRef(null);
+  const audioUrlRef = useRef('');
 
   const snapshot = useMemo(() => buildRickAiSnapshot(data, page), [data, page]);
 
-  async function submit(event) {
-    event?.preventDefault();
-    const message = draft.trim();
-    if (!message || loading) return;
+  function stopPlayback() {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    if (audioUrlRef.current) {
+      URL.revokeObjectURL(audioUrlRef.current);
+      audioUrlRef.current = '';
+    }
+  }
+
+  async function playVoice(text) {
+    if (!voiceEnabled || !text) return;
+    setVoiceBusy(true);
+    try {
+      const reply = await speakRickAiText(text);
+      stopPlayback();
+      const url = audioUrlFromBase64(reply.audioBase64, reply.mimeType);
+      audioUrlRef.current = url;
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audio.onended = () => {
+        if (audioUrlRef.current === url) {
+          URL.revokeObjectURL(url);
+          audioUrlRef.current = '';
+          audioRef.current = null;
+        }
+      };
+      await audio.play();
+    } catch (error) {
+      notify?.(error.message || 'A voz da Rick IA não conseguiu tocar.');
+    } finally {
+      setVoiceBusy(false);
+    }
+  }
+
+  async function sendMessage(message) {
+    const cleanMessage = String(message || '').trim();
+    if (!cleanMessage || loading) return;
     if (role !== 'admin') {
       notify?.('A Rick IA pessoal fica disponível apenas no modo ADM.');
       return;
     }
 
     setDraft('');
-    setMessages((current) => [...current, { role: 'user', content: message }]);
+    setMessages((current) => [...current, { role: 'user', content: cleanMessage }]);
     setLoading(true);
     try {
-      const reply = await sendRickAiMessage({ message, page, snapshot });
+      const reply = await sendRickAiMessage({ message: cleanMessage, page, snapshot });
       setMessages((current) => [...current, { role: 'assistant', content: reply.message }]);
       setPendingAction(reply.pendingAction);
+      if (voiceEnabled) void playVoice(reply.message);
     } catch (error) {
       setMessages((current) => [
         ...current,
@@ -42,6 +116,71 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function submit(event) {
+    event?.preventDefault();
+    await sendMessage(draft);
+  }
+
+  async function finishRecording() {
+    const mimeType = recorderRef.current?.mimeType || 'audio/webm';
+    const blob = new Blob(chunksRef.current, { type: mimeType });
+    chunksRef.current = [];
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    recorderRef.current = null;
+    setRecording(false);
+
+    if (!blob.size) return;
+    setVoiceBusy(true);
+    try {
+      const audioBase64 = await blobToBase64(blob);
+      const result = await transcribeRickAiAudio({ audioBase64, mimeType });
+      setDraft(result.transcript);
+      await sendMessage(result.transcript);
+    } catch (error) {
+      notify?.(error.message || 'Não consegui entender sua gravação.');
+    } finally {
+      setVoiceBusy(false);
+    }
+  }
+
+  async function toggleRecording() {
+    if (role !== 'admin' || loading || voiceBusy) return;
+    if (recording) {
+      recorderRef.current?.stop();
+      return;
+    }
+
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      notify?.('Seu navegador não oferece gravação de áudio compatível.');
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      chunksRef.current = [];
+      streamRef.current = stream;
+      recorderRef.current = recorder;
+      recorder.ondataavailable = (event) => {
+        if (event.data?.size) chunksRef.current.push(event.data);
+      };
+      recorder.onstop = () => void finishRecording();
+      recorder.start();
+      setRecording(true);
+    } catch {
+      notify?.('Não consegui acessar o microfone. Confira a permissão do navegador.');
+    }
+  }
+
+  function toggleVoice() {
+    setVoiceEnabled((current) => {
+      const next = !current;
+      if (!next) stopPlayback();
+      return next;
+    });
   }
 
   function confirmAction() {
@@ -70,12 +209,25 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
               <span className="rick-ai-orb"><Bot size={18} /></span>
               <div>
                 <strong>RICK IA</strong>
-                <small>{loading ? 'pensando...' : 'assistente pessoal · online'}</small>
+                <small>
+                  {recording ? 'ouvindo...' : loading ? 'pensando...' : voiceBusy ? 'preparando voz...' : 'assistente pessoal · online'}
+                </small>
               </div>
             </div>
-            <button className="rick-ai-icon" aria-label="Fechar Rick IA" onClick={() => setOpen(false)}>
-              <X size={18} />
-            </button>
+            <div className="rick-ai-header-actions">
+              <button
+                className={`rick-ai-icon ${voiceEnabled ? 'active' : ''}`}
+                type="button"
+                aria-label={voiceEnabled ? 'Silenciar voz da Rick IA' : 'Ativar voz da Rick IA'}
+                title="Voz gerada por IA"
+                onClick={toggleVoice}
+              >
+                {voiceEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}
+              </button>
+              <button className="rick-ai-icon" aria-label="Fechar Rick IA" onClick={() => setOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
           </header>
 
           <div className="rick-ai-messages">
@@ -111,15 +263,25 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
             <input
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
-              placeholder={role === 'admin' ? 'Fala comigo...' : 'Disponível no modo ADM'}
-              disabled={role !== 'admin' || loading}
+              placeholder={recording ? 'Ouvindo você...' : role === 'admin' ? 'Fala comigo...' : 'Disponível no modo ADM'}
+              disabled={role !== 'admin' || loading || recording}
               maxLength={4000}
               aria-label="Mensagem para Rick IA"
             />
-            <button type="submit" aria-label="Enviar mensagem" disabled={!draft.trim() || loading || role !== 'admin'}>
+            <button
+              type="button"
+              className={`rick-ai-mic ${recording ? 'recording' : ''}`}
+              aria-label={recording ? 'Parar gravação' : 'Falar com a Rick IA'}
+              onClick={toggleRecording}
+              disabled={role !== 'admin' || loading || voiceBusy}
+            >
+              {recording ? <MicOff size={17} /> : <Mic size={17} />}
+            </button>
+            <button type="submit" aria-label="Enviar mensagem" disabled={!draft.trim() || loading || recording || role !== 'admin'}>
               <Send size={17} />
             </button>
           </form>
+          <div className="rick-ai-voice-note">Voz sintética gerada por IA</div>
         </section>
       )}
 
