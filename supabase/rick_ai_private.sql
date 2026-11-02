@@ -33,6 +33,16 @@ alter table public.rick_ai_profiles enable row level security;
 alter table public.rick_ai_conversations enable row level security;
 alter table public.rick_ai_messages enable row level security;
 
+-- New public-schema tables are not assumed to be exposed to the Data API.
+-- Grant only authenticated access; RLS below still decides which rows are visible/mutable.
+grant select, insert, update, delete on table public.rick_ai_profiles to authenticated;
+grant select, insert, update, delete on table public.rick_ai_conversations to authenticated;
+grant select, insert, update, delete on table public.rick_ai_messages to authenticated;
+
+revoke all on table public.rick_ai_profiles from anon;
+revoke all on table public.rick_ai_conversations from anon;
+revoke all on table public.rick_ai_messages from anon;
+
 -- Only authenticated admins of RICK_DEV may access their own Rick IA data.
 create policy "rick_ai_profiles_admin_own"
   on public.rick_ai_profiles
