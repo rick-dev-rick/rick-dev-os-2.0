@@ -32,10 +32,59 @@ export function parseRickAiResponse(data) {
   };
 }
 
+export function buildRickAiVoiceRequest(input = {}) {
+  if (input.mode === 'transcribe') {
+    const audioBase64 = typeof input.audioBase64 === 'string' ? input.audioBase64.trim() : '';
+    const mimeType = typeof input.mimeType === 'string' ? input.mimeType.trim() : '';
+    if (!audioBase64 || !mimeType.startsWith('audio/')) throw Error('Gravação de áudio inválida.');
+    return { mode: 'transcribe', audioBase64, mimeType };
+  }
+
+  if (input.mode === 'speak') {
+    const text = String(input.text || '').trim();
+    if (!text || text.length > 4000) throw Error('Informe um texto válido para a Rick IA falar.');
+    return { mode: 'speak', text };
+  }
+
+  throw Error('Modo de voz inválido.');
+}
+
+export function parseRickAiVoiceResponse(data) {
+  if (data?.mode === 'transcribe') {
+    const transcript = typeof data.transcript === 'string' ? data.transcript.trim() : '';
+    if (!transcript) throw Error(data?.error || 'Não consegui entender o áudio.');
+    return { mode: 'transcribe', transcript, audioBase64: null, mimeType: null };
+  }
+
+  if (data?.mode === 'speak') {
+    const audioBase64 = typeof data.audioBase64 === 'string' ? data.audioBase64.trim() : '';
+    const mimeType = typeof data.mimeType === 'string' ? data.mimeType.trim() : '';
+    if (!audioBase64 || !mimeType.startsWith('audio/')) throw Error(data?.error || 'A Rick IA não conseguiu gerar voz.');
+    return { mode: 'speak', transcript: null, audioBase64, mimeType };
+  }
+
+  throw Error(data?.error || 'A Rick IA retornou uma resposta de voz inválida.');
+}
+
 export async function sendRickAiMessage(input) {
   const body = buildRickAiRequest(input);
   const { data, error } = await client.functions.invoke('rick-ai', { body });
 
   if (error) throw Error(error.message || 'Não foi possível falar com a Rick IA.');
   return parseRickAiResponse(data);
+}
+
+async function sendVoiceRequest(input) {
+  const body = buildRickAiVoiceRequest(input);
+  const { data, error } = await client.functions.invoke('rick-ai-voice', { body });
+  if (error) throw Error(error.message || 'Não foi possível usar a voz da Rick IA.');
+  return parseRickAiVoiceResponse(data);
+}
+
+export async function transcribeRickAiAudio({ audioBase64, mimeType }) {
+  return sendVoiceRequest({ mode: 'transcribe', audioBase64, mimeType });
+}
+
+export async function speakRickAiText(text) {
+  return sendVoiceRequest({ mode: 'speak', text });
 }

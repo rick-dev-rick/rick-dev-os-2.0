@@ -1,6 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildRickAiRequest, parseRickAiResponse } from '../src/rick-ai/client.mjs';
+import {
+  buildRickAiRequest,
+  buildRickAiVoiceRequest,
+  parseRickAiResponse,
+  parseRickAiVoiceResponse,
+} from '../src/rick-ai/client.mjs';
 
 const snapshot = { page: 'finance', modules: { finance: { transactions: 2 } } };
 
@@ -35,4 +40,25 @@ test('parseRickAiResponse validates pending actions instead of trusting backend 
 test('parseRickAiResponse rejects malformed backend replies', () => {
   assert.throws(() => parseRickAiResponse(null), /resposta inválida/i);
   assert.throws(() => parseRickAiResponse({ message: '' }), /resposta inválida/i);
+});
+
+test('buildRickAiVoiceRequest validates transcribe and speak payloads', () => {
+  assert.deepEqual(
+    buildRickAiVoiceRequest({ mode: 'transcribe', audioBase64: 'YWJj', mimeType: 'audio/webm' }),
+    { mode: 'transcribe', audioBase64: 'YWJj', mimeType: 'audio/webm' },
+  );
+  assert.deepEqual(
+    buildRickAiVoiceRequest({ mode: 'speak', text: '  Fala, Rick.  ' }),
+    { mode: 'speak', text: 'Fala, Rick.' },
+  );
+  assert.throws(() => buildRickAiVoiceRequest({ mode: 'speak', text: '   ' }), /texto válido/i);
+});
+
+test('parseRickAiVoiceResponse accepts transcript and audio payloads', () => {
+  assert.deepEqual(parseRickAiVoiceResponse({ mode: 'transcribe', transcript: '  bora codar  ' }), {
+    mode: 'transcribe', transcript: 'bora codar', audioBase64: null, mimeType: null,
+  });
+  assert.deepEqual(parseRickAiVoiceResponse({ mode: 'speak', audioBase64: 'YWJj', mimeType: 'audio/wav' }), {
+    mode: 'speak', transcript: null, audioBase64: 'YWJj', mimeType: 'audio/wav',
+  });
 });

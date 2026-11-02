@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/rick-ai-v2
+      - feature/rick-ai-personality-voice
   workflow_dispatch:
 
 permissions:
