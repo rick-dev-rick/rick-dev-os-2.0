@@ -40,6 +40,7 @@ import SystemExtras from "./System.jsx";
 import useCloudSync from "./useCloudSync.jsx";
 import Music from "./Music.jsx";
 import FocusTimer from "./Timer.jsx";
+import RickAiPanel from "./rick-ai/RickAiPanel.jsx";
 import {
   initialData,
   normalizeData,
@@ -1299,6 +1300,13 @@ export default function App({ session, onSignOut }) {
             </section>
           </div>
         )}
+        <RickAiPanel
+          data={data}
+          page={page}
+          role={role}
+          setData={setData}
+          notify={notify}
+        />
       </div>
     </ReadOnlyContext.Provider>
   );
