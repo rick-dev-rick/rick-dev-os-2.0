@@ -76,7 +76,7 @@ export async function sendRickAiMessage(input) {
 
 async function sendVoiceRequest(input) {
   const body = buildRickAiVoiceRequest(input);
-  const { data, error } = await client.functions.invoke('rick-ai', { body });
+  const { data, error } = await client.functions.invoke('rick-ai-voice', { body });
   if (error) throw Error(error.message || 'Não foi possível usar a voz da Rick IA.');
   return parseRickAiVoiceResponse(data);
 }
