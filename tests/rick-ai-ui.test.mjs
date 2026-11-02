@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 
 const main = await readFile(new URL('../src/main.jsx', import.meta.url), 'utf8');
 const panel = await readFile(new URL('../src/rick-ai/RickAiPanel.jsx', import.meta.url), 'utf8');
+const styles = await readFile(new URL('../src/rick-ai/rick-ai.css', import.meta.url), 'utf8');
 
 test('App importa e renderiza RickAiPanel com o estado vivo do OS', () => {
   assert.match(main, /import RickAiPanel from ["']\.\/rick-ai\/RickAiPanel\.jsx["']/);
@@ -22,20 +23,19 @@ test('modo convidado não consegue enviar mensagens privadas', () => {
   assert.match(panel, /Disponível no modo ADM/);
 });
 
-test('painel oferece push to talk e controle de voz', () => {
-  assert.match(panel, /MediaRecorder/);
-  assert.match(panel, /navigator\.mediaDevices\.getUserMedia/);
-  assert.match(panel, /Mic/);
-  assert.match(panel, /Volume2|VolumeX/);
-  assert.match(panel, /transcribeRickAiAudio/);
-  assert.match(panel, /speakRickAiText/);
+test('painel fica em modo texto sem controles ou chamadas de voz', () => {
+  assert.doesNotMatch(panel, /MediaRecorder/);
+  assert.doesNotMatch(panel, /navigator\.mediaDevices\.getUserMedia/);
+  assert.doesNotMatch(panel, /\bMic\b|\bMicOff\b/);
+  assert.doesNotMatch(panel, /Volume2|VolumeX/);
+  assert.doesNotMatch(panel, /transcribeRickAiAudio/);
+  assert.doesNotMatch(panel, /speakRickAiText/);
+  assert.doesNotMatch(panel, /rick-ai-mic/);
+  assert.doesNotMatch(panel, /rick-ai-voice-note/);
 });
 
-test('microfone usa hold-to-talk: pressionar inicia e soltar encerra a gravação', () => {
-  assert.match(panel, /onPointerDown=\{startRecording\}/);
-  assert.match(panel, /onPointerUp=\{stopRecording\}/);
-  assert.match(panel, /onPointerCancel=\{stopRecording\}/);
-  assert.match(panel, /const recorder = recorderRef\.current/);
-  assert.match(panel, /recorder\.stop\(\)/);
-  assert.doesNotMatch(panel, /onClick=\{toggleRecording\}/);
+test('launcher da Rick IA fica no canto inferior esquerdo', () => {
+  assert.match(styles, /\.rick-ai-root\{position:fixed;left:24px;bottom:24px/);
+  assert.match(styles, /\.rick-ai-panel\{position:absolute;left:0;bottom:70px/);
+  assert.match(styles, /@media\(max-width:640px\)\{\.rick-ai-root\{left:14px;bottom:14px\}/);
 });
