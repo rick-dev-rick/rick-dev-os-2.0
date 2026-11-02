@@ -8,6 +8,7 @@ on:
       - feature/rick-ai-mic-hotfix
       - feature/rick-ai-text-focus
       - feature/rick-ai-memory-context
+      - feature/rick-ai-conversations
   workflow_dispatch:
 
 permissions:
