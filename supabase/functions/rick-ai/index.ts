@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { RICK_AI_SYSTEM_PROMPT } from './prompt.ts';
+import { synthesizeSpeech, transcribeAudio } from './voice.ts';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -139,6 +140,12 @@ Deno.serve(async (req: Request) => {
     if (adminError || !admin) return json({ error: 'Admin access required.' }, 403);
 
     const body = await req.json();
+    const openAiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openAiKey) return json({ error: 'Rick IA provider is not configured yet.' }, 503);
+
+    if (body?.mode === 'transcribe') return await transcribeAudio(body, openAiKey);
+    if (body?.mode === 'speak') return await synthesizeSpeech(body, openAiKey);
+
     const message = typeof body?.message === 'string' ? body.message.trim() : '';
     const page = typeof body?.page === 'string' ? body.page.slice(0, 40) : 'home';
     const snapshot = body?.snapshot && typeof body.snapshot === 'object' ? body.snapshot : {};
@@ -149,9 +156,6 @@ Deno.serve(async (req: Request) => {
       .select('profile')
       .eq('owner_id', user.id)
       .maybeSingle();
-
-    const openAiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAiKey) return json({ error: 'Rick IA provider is not configured yet.' }, 503);
 
     const model = Deno.env.get('OPENAI_MODEL') || 'gpt-6-luna';
     const input = [
