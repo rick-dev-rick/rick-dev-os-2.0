@@ -30,3 +30,12 @@ test('painel oferece push to talk e controle de voz', () => {
   assert.match(panel, /transcribeRickAiAudio/);
   assert.match(panel, /speakRickAiText/);
 });
+
+test('microfone usa hold-to-talk: pressionar inicia e soltar encerra a gravação', () => {
+  assert.match(panel, /onPointerDown=\{startRecording\}/);
+  assert.match(panel, /onPointerUp=\{stopRecording\}/);
+  assert.match(panel, /onPointerCancel=\{stopRecording\}/);
+  assert.match(panel, /const recorder = recorderRef\.current/);
+  assert.match(panel, /recorder\.stop\(\)/);
+  assert.doesNotMatch(panel, /onClick=\{toggleRecording\}/);
+});
