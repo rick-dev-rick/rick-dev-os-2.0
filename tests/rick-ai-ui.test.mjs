@@ -35,6 +35,7 @@ test('microfone usa hold-to-talk: pressionar inicia e soltar encerra a gravaçã
   assert.match(panel, /onPointerDown=\{startRecording\}/);
   assert.match(panel, /onPointerUp=\{stopRecording\}/);
   assert.match(panel, /onPointerCancel=\{stopRecording\}/);
-  assert.match(panel, /recorderRef\.current\?\.stop\(\)/);
+  assert.match(panel, /const recorder = recorderRef\.current/);
+  assert.match(panel, /recorder\.stop\(\)/);
   assert.doesNotMatch(panel, /onClick=\{toggleRecording\}/);
 });
