@@ -1,3 +1,4 @@
+// One-time feature-branch integration script. Safe to run repeatedly.
 import { readFile, writeFile } from 'node:fs/promises';
 
 const path = new URL('../src/main.jsx', import.meta.url);
