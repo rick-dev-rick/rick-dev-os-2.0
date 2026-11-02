@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Bot, Check, LoaderCircle, MessageCircle, Send, X } from 'lucide-react';
 import { applyConfirmedAction, buildRickAiSnapshot } from './contracts.mjs';
-import { loadRickAiHistory, sendRickAiMessage } from './client.mjs';
+import { loadRickAiHistory, saveRickAiExchange, sendRickAiMessage } from './client.mjs';
 import './rick-ai.css';
 
 const greeting = { role: 'assistant', content: 'Tô por aqui, Rick. Manda o que você quer analisar 😏' };
@@ -50,14 +50,34 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
       return;
     }
 
+    const recentConversation = messages
+      .filter((item) => item?.role === 'user' || item?.role === 'assistant')
+      .slice(-12)
+      .map(({ role: messageRole, content }) => ({ role: messageRole, content }));
+
     setDraft('');
     setMessages((current) => [...current, { role: 'user', content: cleanMessage }]);
     setLoading(true);
     try {
-      const reply = await sendRickAiMessage({ message: cleanMessage, page, snapshot, conversationId });
-      if (reply.conversationId) setConversationId(reply.conversationId);
+      const reply = await sendRickAiMessage({
+        message: cleanMessage,
+        page,
+        snapshot: { ...snapshot, rickAiRecentConversation: recentConversation },
+        conversationId,
+      });
       setMessages((current) => [...current, { role: 'assistant', content: reply.message }]);
       setPendingAction(reply.pendingAction);
+
+      try {
+        const savedConversationId = await saveRickAiExchange({
+          conversationId,
+          userMessage: cleanMessage,
+          assistantMessage: reply.message,
+        });
+        setConversationId(savedConversationId);
+      } catch {
+        notify?.('A resposta funcionou, mas não consegui salvar essa conversa na memória.');
+      }
     } catch (error) {
       setMessages((current) => [...current, {
         role: 'assistant',
@@ -105,8 +125,8 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
           </header>
 
           <div className="rick-ai-messages">
-            {messages.map((message, index) => (
-              <div key={`${message.role}-${index}`} className={`rick-ai-message ${message.role}`}>{message.content}</div>
+            {messages.map((messageItem, index) => (
+              <div key={`${messageItem.role}-${index}`} className={`rick-ai-message ${messageItem.role}`}>{messageItem.content}</div>
             ))}
             {loading && <div className="rick-ai-message assistant loading"><LoaderCircle size={15} className="rick-ai-spin" /> pensando</div>}
             <div ref={messagesEndRef} />
