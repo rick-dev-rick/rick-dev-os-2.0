@@ -44,7 +44,7 @@ test('painel carrega histórico e mantém conversationId', () => {
   assert.match(panel, /loadRickAiHistory/);
   assert.match(panel, /const \[conversationId, setConversationId\] = useState\(null\)/);
   assert.match(panel, /setConversationId\(history\.conversationId\)/);
-  assert.match(panel, /conversationId\s*\}/);
+  assert.match(panel, /saveRickAiExchange\(\{[\s\S]*conversationId,/);
 });
 
 test('painel faz auto-scroll para a mensagem mais recente', () => {
