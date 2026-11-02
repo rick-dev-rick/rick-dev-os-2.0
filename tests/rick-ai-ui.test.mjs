@@ -21,3 +21,12 @@ test('modo convidado não consegue enviar mensagens privadas', () => {
   assert.match(panel, /role !== ['"]admin['"]/);
   assert.match(panel, /Disponível no modo ADM/);
 });
+
+test('painel oferece push to talk e controle de voz', () => {
+  assert.match(panel, /MediaRecorder/);
+  assert.match(panel, /navigator\.mediaDevices\.getUserMedia/);
+  assert.match(panel, /Mic/);
+  assert.match(panel, /Volume2|VolumeX/);
+  assert.match(panel, /transcribeRickAiAudio/);
+  assert.match(panel, /speakRickAiText/);
+});
