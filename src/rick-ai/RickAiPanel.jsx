@@ -53,6 +53,7 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
   const streamRef = useRef(null);
   const audioRef = useRef(null);
   const audioUrlRef = useRef('');
+  const micHeldRef = useRef(false);
 
   const snapshot = useMemo(() => buildRickAiSnapshot(data, page), [data, page]);
 
@@ -146,33 +147,44 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
     }
   }
 
-  async function toggleRecording() {
-    if (role !== 'admin' || loading || voiceBusy) return;
-    if (recording) {
-      recorderRef.current?.stop();
-      return;
-    }
+  async function startRecording(event) {
+    if (role !== 'admin' || loading || voiceBusy || recording || micHeldRef.current) return;
+    micHeldRef.current = true;
+    event?.currentTarget?.setPointerCapture?.(event.pointerId);
 
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      micHeldRef.current = false;
       notify?.('Seu navegador não oferece gravação de áudio compatível.');
       return;
     }
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (!micHeldRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+
       const recorder = new MediaRecorder(stream);
       chunksRef.current = [];
       streamRef.current = stream;
       recorderRef.current = recorder;
-      recorder.ondataavailable = (event) => {
-        if (event.data?.size) chunksRef.current.push(event.data);
+      recorder.ondataavailable = (dataEvent) => {
+        if (dataEvent.data?.size) chunksRef.current.push(dataEvent.data);
       };
       recorder.onstop = () => void finishRecording();
       recorder.start();
       setRecording(true);
     } catch {
+      micHeldRef.current = false;
       notify?.('Não consegui acessar o microfone. Confira a permissão do navegador.');
     }
+  }
+
+  function stopRecording() {
+    micHeldRef.current = false;
+    const recorder = recorderRef.current;
+    if (recorder?.state === 'recording') recorder.stop();
   }
 
   function toggleVoice() {
@@ -210,7 +222,7 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
               <div>
                 <strong>RICK IA</strong>
                 <small>
-                  {recording ? 'ouvindo...' : loading ? 'pensando...' : voiceBusy ? 'preparando voz...' : 'assistente pessoal · online'}
+                  {recording ? 'ouvindo... solte para enviar' : loading ? 'pensando...' : voiceBusy ? 'preparando voz...' : 'assistente pessoal · online'}
                 </small>
               </div>
             </div>
@@ -271,8 +283,11 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
             <button
               type="button"
               className={`rick-ai-mic ${recording ? 'recording' : ''}`}
-              aria-label={recording ? 'Parar gravação' : 'Falar com a Rick IA'}
-              onClick={toggleRecording}
+              aria-label={recording ? 'Solte para enviar a gravação' : 'Segure para falar com a Rick IA'}
+              title="Segure para falar"
+              onPointerDown={startRecording}
+              onPointerUp={stopRecording}
+              onPointerCancel={stopRecording}
               disabled={role !== 'admin' || loading || voiceBusy}
             >
               {recording ? <MicOff size={17} /> : <Mic size={17} />}
@@ -281,7 +296,7 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
               <Send size={17} />
             </button>
           </form>
-          <div className="rick-ai-voice-note">Voz sintética gerada por IA</div>
+          <div className="rick-ai-voice-note">Segure o microfone para falar · Voz sintética gerada por IA</div>
         </section>
       )}
 
