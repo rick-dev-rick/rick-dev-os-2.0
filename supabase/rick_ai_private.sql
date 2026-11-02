@@ -28,6 +28,8 @@ create index if not exists rick_ai_conversations_owner_updated_idx
   on public.rick_ai_conversations(owner_id, updated_at desc);
 create index if not exists rick_ai_messages_conversation_created_idx
   on public.rick_ai_messages(conversation_id, created_at asc);
+create index if not exists rick_ai_messages_owner_idx
+  on public.rick_ai_messages(owner_id);
 
 alter table public.rick_ai_profiles enable row level security;
 alter table public.rick_ai_conversations enable row level security;
