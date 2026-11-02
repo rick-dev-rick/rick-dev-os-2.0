@@ -68,3 +68,22 @@ test('painel faz auto-scroll para a mensagem mais recente', () => {
   assert.match(panel, /messagesEndRef/);
   assert.match(panel, /scrollIntoView/);
 });
+
+test('painel calcula insights locais sem chamar a API automaticamente', () => {
+  assert.match(panel, /buildRickAiInsights/);
+  assert.match(panel, /const insights = useMemo/);
+  assert.doesNotMatch(panel, /useEffect\([\s\S]{0,500}sendRickAiMessage/);
+});
+
+test('painel mostra cartão RICK IA NOTOU e permite dispensar o conjunto atual', () => {
+  assert.match(panel, /RICK IA NOTOU/);
+  assert.match(panel, /Dispensar/);
+  assert.match(panel, /dismissedInsightSignature/);
+  assert.match(panel, /currentInsightSignature/);
+});
+
+test('launcher mostra badge discreto quando há insights e painel está fechado', () => {
+  assert.match(panel, /rick-ai-insight-badge/);
+  assert.match(styles, /\.rick-ai-insight-badge\{/);
+  assert.match(styles, /\.rick-ai-insight-card\{/);
+});
