@@ -9,6 +9,7 @@ on:
       - feature/rick-ai-text-focus
       - feature/rick-ai-memory-context
       - feature/rick-ai-conversations
+      - feature/rick-ai-proactivity
   workflow_dispatch:
 
 permissions:
