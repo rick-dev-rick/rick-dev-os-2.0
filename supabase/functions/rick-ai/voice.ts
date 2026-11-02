@@ -1,6 +1,11 @@
+const cors = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 export const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
   status,
-  headers: { 'Content-Type': 'application/json' },
+  headers: { ...cors, 'Content-Type': 'application/json' },
 });
 
 function decodeBase64(value: string) {
