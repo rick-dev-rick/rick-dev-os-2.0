@@ -1,16 +1,21 @@
 import { client } from '../cloud-client.mjs';
 import { validatePendingAction } from './contracts.mjs';
 
-export function buildRickAiRequest({ message, page, snapshot }) {
+export function buildRickAiRequest({ message, page, snapshot, conversationId = null }) {
   const text = String(message || '').trim();
   if (!text || text.length > 4000) {
     throw Error('Escreva uma mensagem válida para a Rick IA.');
   }
 
+  const cleanConversationId = typeof conversationId === 'string' && conversationId.trim()
+    ? conversationId.trim()
+    : null;
+
   return {
     message: text,
     page: typeof page === 'string' && page ? page : 'home',
     snapshot: snapshot && typeof snapshot === 'object' && !Array.isArray(snapshot) ? snapshot : {},
+    conversationId: cleanConversationId,
   };
 }
 
@@ -30,6 +35,30 @@ export function parseRickAiResponse(data) {
         ? data.conversationId.trim()
         : null,
   };
+}
+
+export function parseRickAiHistory(data) {
+  const conversationId = typeof data?.conversationId === 'string' && data.conversationId.trim()
+    ? data.conversationId.trim()
+    : null;
+  const messages = Array.isArray(data?.messages)
+    ? data.messages
+      .filter((item) => item && (item.role === 'user' || item.role === 'assistant'))
+      .map((item) => ({ role: item.role, content: String(item.content || '').trim() }))
+      .filter((item) => item.content)
+    : [];
+  return { conversationId, messages };
+}
+
+export async function loadRickAiHistory(conversationId = null) {
+  const { data, error } = await client.functions.invoke('rick-ai', {
+    body: {
+      mode: 'history',
+      conversationId: typeof conversationId === 'string' && conversationId.trim() ? conversationId.trim() : null,
+    },
+  });
+  if (error) throw Error(error.message || 'Não foi possível carregar o histórico da Rick IA.');
+  return parseRickAiHistory(data);
 }
 
 export function buildRickAiVoiceRequest(input = {}) {
