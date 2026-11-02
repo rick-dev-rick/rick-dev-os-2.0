@@ -6,6 +6,7 @@ on:
       - feature/rick-ai-v2
       - feature/rick-ai-personality-voice
       - feature/rick-ai-mic-hotfix
+      - feature/rick-ai-text-focus
   workflow_dispatch:
 
 permissions:
