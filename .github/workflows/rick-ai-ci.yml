@@ -5,6 +5,7 @@ on:
     branches:
       - feature/rick-ai-v2
       - feature/rick-ai-personality-voice
+      - feature/rick-ai-mic-hotfix
   workflow_dispatch:
 
 permissions:
