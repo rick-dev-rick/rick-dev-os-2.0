@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Bot, Check, History, LoaderCircle, MessageCircle, Plus, Send, X } from 'lucide-react';
 import { applyConfirmedAction, buildRickAiSnapshot } from './contracts.mjs';
 import { listRickAiConversations, loadRickAiHistory, saveRickAiExchange, sendRickAiMessage } from './client.mjs';
+import { buildRickAiInsights } from './insights.mjs';
 import './rick-ai.css';
 
 const greeting = { role: 'assistant', content: 'Tô por aqui, Rick. Manda o que você quer analisar 😏' };
@@ -22,8 +23,12 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
+  const [dismissedInsightSignature, setDismissedInsightSignature] = useState('');
   const messagesEndRef = useRef(null);
   const snapshot = useMemo(() => buildRickAiSnapshot(data, page), [data, page]);
+  const insights = useMemo(() => role === 'admin' ? buildRickAiInsights(snapshot) : [], [snapshot, role]);
+  const currentInsightSignature = useMemo(() => insights.map((item) => item.id).join('|'), [insights]);
+  const insightsVisible = insights.length > 0 && currentInsightSignature !== dismissedInsightSignature;
 
   async function refreshConversations() {
     if (role !== 'admin') return;
@@ -130,6 +135,11 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
         {conversations.length ? conversations.map((conversation) => <button type="button" key={conversation.id} className={conversation.id === conversationId ? 'active' : ''} onClick={() => switchConversation(conversation.id)}><span>{conversation.title}</span><small>{shortDate(conversation.updatedAt)}</small></button>) : <p>Nenhuma conversa salva ainda.</p>}
       </div>}
 
+      {insightsVisible && <div className="rick-ai-insight-card">
+        <div className="rick-ai-insight-card-head"><strong>RICK IA NOTOU</strong><button type="button" onClick={() => setDismissedInsightSignature(currentInsightSignature)}>Dispensar</button></div>
+        {insights.map((insight) => <p key={insight.id}>{insight.message}</p>)}
+      </div>}
+
       <div className="rick-ai-messages">
         {messages.map((messageItem, index) => <div key={`${messageItem.role}-${index}`} className={`rick-ai-message ${messageItem.role}`}>{messageItem.content}</div>)}
         {loading && <div className="rick-ai-message assistant loading"><LoaderCircle size={15} className="rick-ai-spin"/> pensando</div>}
@@ -140,6 +150,6 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
 
       <form className="rick-ai-composer" onSubmit={submit}><input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={role === 'admin' ? 'Fala comigo...' : 'Disponível no modo ADM'} disabled={role !== 'admin' || loading} maxLength={4000} aria-label="Mensagem para Rick IA"/><button type="submit" aria-label="Enviar mensagem" disabled={!draft.trim() || loading || role !== 'admin'}><Send size={17}/></button></form>
     </section>}
-    <button type="button" className={`rick-ai-launcher ${open ? 'active' : ''}`} aria-label={open ? 'Rick IA aberta' : 'Abrir Rick IA'} onClick={() => setOpen((value) => !value)}>{open ? <X size={22}/> : <MessageCircle size={23}/>} {!open && <span className="rick-ai-launcher-label">RICK IA</span>}</button>
+    <button type="button" className={`rick-ai-launcher ${open ? 'active' : ''}`} aria-label={open ? 'Rick IA aberta' : 'Abrir Rick IA'} onClick={() => setOpen((value) => !value)}>{open ? <X size={22}/> : <MessageCircle size={23}/>} {!open && <span className="rick-ai-launcher-label">RICK IA</span>}{!open && insightsVisible && <span className="rick-ai-insight-badge">{insights.length}</span>}</button>
   </div>;
 }
