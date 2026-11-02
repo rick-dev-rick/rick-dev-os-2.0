@@ -39,3 +39,15 @@ test('launcher da Rick IA fica no canto inferior esquerdo', () => {
   assert.match(styles, /\.rick-ai-panel\{position:absolute;left:0;bottom:70px/);
   assert.match(styles, /@media\(max-width:640px\)\{\.rick-ai-root\{left:14px;bottom:14px\}/);
 });
+
+test('painel carrega histórico e mantém conversationId', () => {
+  assert.match(panel, /loadRickAiHistory/);
+  assert.match(panel, /const \[conversationId, setConversationId\] = useState\(null\)/);
+  assert.match(panel, /setConversationId\(history\.conversationId\)/);
+  assert.match(panel, /saveRickAiExchange\(\{[\s\S]*conversationId,/);
+});
+
+test('painel faz auto-scroll para a mensagem mais recente', () => {
+  assert.match(panel, /messagesEndRef/);
+  assert.match(panel, /scrollIntoView/);
+});

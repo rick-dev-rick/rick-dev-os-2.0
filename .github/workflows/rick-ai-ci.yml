@@ -7,6 +7,7 @@ on:
       - feature/rick-ai-personality-voice
       - feature/rick-ai-mic-hotfix
       - feature/rick-ai-text-focus
+      - feature/rick-ai-memory-context
   workflow_dispatch:
 
 permissions:

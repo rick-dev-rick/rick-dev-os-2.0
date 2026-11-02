@@ -1,29 +1,46 @@
-import React, { useMemo, useState } from 'react';
-import {
-  Bot,
-  Check,
-  LoaderCircle,
-  MessageCircle,
-  Send,
-  X,
-} from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Bot, Check, LoaderCircle, MessageCircle, Send, X } from 'lucide-react';
 import { applyConfirmedAction, buildRickAiSnapshot } from './contracts.mjs';
-import { sendRickAiMessage } from './client.mjs';
+import { loadRickAiHistory, saveRickAiExchange, sendRickAiMessage } from './client.mjs';
 import './rick-ai.css';
+
+const greeting = { role: 'assistant', content: 'Tô por aqui, Rick. Manda o que você quer analisar 😏' };
 
 export default function RickAiPanel({ data, page, role, setData, notify }) {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    {
-      role: 'assistant',
-      content: 'Tô por aqui, Rick. Manda o que você quer analisar 😏',
-    },
-  ]);
+  const [messages, setMessages] = useState([greeting]);
+  const [conversationId, setConversationId] = useState(null);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
+  const messagesEndRef = useRef(null);
 
   const snapshot = useMemo(() => buildRickAiSnapshot(data, page), [data, page]);
+
+  useEffect(() => {
+    if (!open || role !== 'admin' || historyLoaded) return;
+    let active = true;
+    setLoading(true);
+    loadRickAiHistory()
+      .then((history) => {
+        if (!active) return;
+        setConversationId(history.conversationId);
+        setMessages(history.messages.length ? history.messages : [greeting]);
+        setHistoryLoaded(true);
+      })
+      .catch(() => {
+        if (!active) return;
+        setHistoryLoaded(true);
+        notify?.('Não consegui carregar o histórico da Rick IA, mas o chat continua disponível.');
+      })
+      .finally(() => active && setLoading(false));
+    return () => { active = false; };
+  }, [open, role, historyLoaded, notify]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'end' });
+  }, [messages, loading, pendingAction]);
 
   async function sendMessage(message) {
     const cleanMessage = String(message || '').trim();
@@ -33,18 +50,39 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
       return;
     }
 
+    const recentConversation = messages
+      .filter((item) => item?.role === 'user' || item?.role === 'assistant')
+      .slice(-12)
+      .map(({ role: messageRole, content }) => ({ role: messageRole, content }));
+
     setDraft('');
     setMessages((current) => [...current, { role: 'user', content: cleanMessage }]);
     setLoading(true);
     try {
-      const reply = await sendRickAiMessage({ message: cleanMessage, page, snapshot });
+      const reply = await sendRickAiMessage({
+        message: cleanMessage,
+        page,
+        snapshot: { ...snapshot, rickAiRecentConversation: recentConversation },
+        conversationId,
+      });
       setMessages((current) => [...current, { role: 'assistant', content: reply.message }]);
       setPendingAction(reply.pendingAction);
+
+      try {
+        const savedConversationId = await saveRickAiExchange({
+          conversationId,
+          userMessage: cleanMessage,
+          assistantMessage: reply.message,
+        });
+        setConversationId(savedConversationId);
+      } catch {
+        notify?.('A resposta funcionou, mas não consegui salvar essa conversa na memória.');
+      }
     } catch (error) {
-      setMessages((current) => [
-        ...current,
-        { role: 'assistant', content: error.message || 'Deu ruim aqui por um instante. Tenta de novo.' },
-      ]);
+      setMessages((current) => [...current, {
+        role: 'assistant',
+        content: error.message || 'Deu ruim aqui por um instante. Tenta de novo.',
+      }]);
     } finally {
       setLoading(false);
     }
@@ -61,10 +99,7 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
       const next = applyConfirmedAction(data, pendingAction);
       const accepted = setData(next);
       if (accepted === false) return;
-      setMessages((current) => [
-        ...current,
-        { role: 'assistant', content: 'Feito. Agora sim eu alterei porque você confirmou 😏' },
-      ]);
+      setMessages((current) => [...current, { role: 'assistant', content: 'Feito. Agora sim eu alterei porque você confirmou 😏' }]);
       notify?.('Ação da Rick IA confirmada.');
       setPendingAction(null);
     } catch (error) {
@@ -81,27 +116,20 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
               <span className="rick-ai-orb"><Bot size={18} /></span>
               <div>
                 <strong>RICK IA</strong>
-                <small>{loading ? 'pensando...' : 'assistente pessoal · online'}</small>
+                <small>{loading ? 'pensando...' : conversationId ? 'memória ativa · online' : 'assistente pessoal · online'}</small>
               </div>
             </div>
             <div className="rick-ai-header-actions">
-              <button className="rick-ai-icon" aria-label="Fechar Rick IA" onClick={() => setOpen(false)}>
-                <X size={18} />
-              </button>
+              <button className="rick-ai-icon" aria-label="Fechar Rick IA" onClick={() => setOpen(false)}><X size={18} /></button>
             </div>
           </header>
 
           <div className="rick-ai-messages">
-            {messages.map((message, index) => (
-              <div key={`${message.role}-${index}`} className={`rick-ai-message ${message.role}`}>
-                {message.content}
-              </div>
+            {messages.map((messageItem, index) => (
+              <div key={`${messageItem.role}-${index}`} className={`rick-ai-message ${messageItem.role}`}>{messageItem.content}</div>
             ))}
-            {loading && (
-              <div className="rick-ai-message assistant loading">
-                <LoaderCircle size={15} className="rick-ai-spin" /> pensando
-              </div>
-            )}
+            {loading && <div className="rick-ai-message assistant loading"><LoaderCircle size={15} className="rick-ai-spin" /> pensando</div>}
+            <div ref={messagesEndRef} />
           </div>
 
           {pendingAction && (
@@ -110,38 +138,20 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
               <strong>{pendingAction.preview}</strong>
               <p>Nada foi alterado ainda.</p>
               <div>
-                <button type="button" className="rick-ai-cancel" onClick={() => setPendingAction(null)}>
-                  Cancelar
-                </button>
-                <button type="button" className="rick-ai-confirm" onClick={confirmAction}>
-                  <Check size={15} /> Confirmar
-                </button>
+                <button type="button" className="rick-ai-cancel" onClick={() => setPendingAction(null)}>Cancelar</button>
+                <button type="button" className="rick-ai-confirm" onClick={confirmAction}><Check size={15} /> Confirmar</button>
               </div>
             </div>
           )}
 
           <form className="rick-ai-composer" onSubmit={submit}>
-            <input
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              placeholder={role === 'admin' ? 'Fala comigo...' : 'Disponível no modo ADM'}
-              disabled={role !== 'admin' || loading}
-              maxLength={4000}
-              aria-label="Mensagem para Rick IA"
-            />
-            <button type="submit" aria-label="Enviar mensagem" disabled={!draft.trim() || loading || role !== 'admin'}>
-              <Send size={17} />
-            </button>
+            <input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={role === 'admin' ? 'Fala comigo...' : 'Disponível no modo ADM'} disabled={role !== 'admin' || loading} maxLength={4000} aria-label="Mensagem para Rick IA" />
+            <button type="submit" aria-label="Enviar mensagem" disabled={!draft.trim() || loading || role !== 'admin'}><Send size={17} /></button>
           </form>
         </section>
       )}
 
-      <button
-        type="button"
-        className={`rick-ai-launcher ${open ? 'active' : ''}`}
-        aria-label={open ? 'Rick IA aberta' : 'Abrir Rick IA'}
-        onClick={() => setOpen((value) => !value)}
-      >
+      <button type="button" className={`rick-ai-launcher ${open ? 'active' : ''}`} aria-label={open ? 'Rick IA aberta' : 'Abrir Rick IA'} onClick={() => setOpen((value) => !value)}>
         {open ? <X size={22} /> : <MessageCircle size={23} />}
         {!open && <span className="rick-ai-launcher-label">RICK IA</span>}
       </button>

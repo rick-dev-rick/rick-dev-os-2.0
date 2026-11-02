@@ -3,17 +3,26 @@ import assert from 'node:assert/strict';
 import {
   buildRickAiRequest,
   buildRickAiVoiceRequest,
+  parseRickAiHistory,
   parseRickAiResponse,
   parseRickAiVoiceResponse,
 } from '../src/rick-ai/client.mjs';
 
 const snapshot = { page: 'finance', modules: { finance: { transactions: 2 } } };
+const conversationId = '3a7ab64b-8cec-49da-b1b5-f23b70a5392d';
 
-test('buildRickAiRequest trims message and preserves scoped snapshot', () => {
-  assert.deepEqual(buildRickAiRequest({ message: '  quanto gastei?  ', page: 'finance', snapshot }), {
+test('buildRickAiRequest trims message and preserves scoped snapshot and conversation', () => {
+  assert.deepEqual(buildRickAiRequest({ message: '  quanto gastei?  ', page: 'finance', snapshot, conversationId }), {
     message: 'quanto gastei?',
     page: 'finance',
     snapshot,
+    conversationId,
+  });
+});
+
+test('buildRickAiRequest omits blank conversation id', () => {
+  assert.deepEqual(buildRickAiRequest({ message: 'oi', page: 'home', snapshot: {}, conversationId: '   ' }), {
+    message: 'oi', page: 'home', snapshot: {}, conversationId: null,
   });
 });
 
@@ -22,11 +31,27 @@ test('buildRickAiRequest rejects blank and oversized messages', () => {
   assert.throws(() => buildRickAiRequest({ message: 'x'.repeat(4001), page: 'home', snapshot: {} }), /mensagem válida/i);
 });
 
-test('parseRickAiResponse accepts a normal assistant reply', () => {
-  assert.deepEqual(parseRickAiResponse({ message: '  Tá sob controle, Rick.  ' }), {
-    message: 'Tá sob controle, Rick.',
-    pendingAction: null,
-    conversationId: null,
+test('parseRickAiResponse accepts a normal assistant reply with conversation id', () => {
+  assert.deepEqual(parseRickAiResponse({ message: '  Tá sob controle, Rick.  ', conversationId }), {
+    message: 'Tá sob controle, Rick.', pendingAction: null, conversationId,
+  });
+});
+
+test('parseRickAiHistory normalizes a private conversation history', () => {
+  assert.deepEqual(parseRickAiHistory({
+    conversationId,
+    messages: [
+      { role: 'user', content: '  oi  ' },
+      { role: 'assistant', content: ' fala Rick ' },
+      { role: 'system', content: 'ignorar' },
+      { role: 'user', content: '' },
+    ],
+  }), {
+    conversationId,
+    messages: [
+      { role: 'user', content: 'oi' },
+      { role: 'assistant', content: 'fala Rick' },
+    ],
   });
 });
 
