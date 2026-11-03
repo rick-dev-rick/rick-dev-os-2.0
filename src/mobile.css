@@ -48,6 +48,30 @@
     gap: 12px;
   }
 
+  .next-card-action {
+    grid-column: 1 / -1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    width: max-content;
+    max-width: 100%;
+    margin-top: 10px;
+    color: #9fc98b;
+    font-size: 9px;
+  }
+
+  .next-card-action svg {
+    width: 14px;
+    height: 14px;
+    padding: 5px;
+    box-sizing: content-box;
+    border: 1px solid #c2fa7524;
+    border-radius: 8px;
+    background: #c2fa7508;
+    color: #c2fa75;
+  }
+
   .overview-metrics {
     min-width: 0;
   }
@@ -83,9 +107,10 @@
   }
 
   .rick-ai-root {
+    --mobile-player-clearance: 128px;
     left: max(12px, env(safe-area-inset-left));
     right: auto;
-    bottom: calc(96px + env(safe-area-inset-bottom));
+    bottom: calc(var(--mobile-player-clearance) + env(safe-area-inset-bottom));
   }
 
   .rick-ai-launcher {
