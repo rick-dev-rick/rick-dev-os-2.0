@@ -87,7 +87,7 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
       .catch(() => {
         if (!active) return;
         setHistoryLoaded(true);
-        notify?.('Não consegui carregar todo o histórico da Daiane, mas o chat continua disponível.');
+        notify?.('Não consegui carregar todo o histórico da RICK AI, mas o chat continua disponível.');
       })
       .finally(() => active && setLoading(false));
     return () => { active = false; };
@@ -135,14 +135,14 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
       setConversationId(history.conversationId);
       setMessages(history.messages.length ? history.messages : [greeting]);
       setConversationListOpen(false);
-    } catch { notify?.('Não consegui abrir essa conversa da Daiane.'); }
+    } catch { notify?.('Não consegui abrir essa conversa da RICK AI.'); }
     finally { setLoading(false); }
   }
 
   async function sendMessage(message) {
     const cleanMessage = String(message || '').trim();
     if (!cleanMessage || loading) return;
-    if (role !== 'admin') { notify?.('A Daiane pessoal fica disponível apenas no modo ADM.'); return; }
+    if (role !== 'admin') { notify?.('A RICK AI pessoal fica disponível apenas no modo ADM.'); return; }
     const recentConversation = messages.filter((item) => item?.role === 'user' || item?.role === 'assistant').slice(-12).map(({ role: messageRole, content }) => ({ role: messageRole, content }));
     const identityContext = inferRickIdentityContext({ message: cleanMessage, recentConversation, activeModule: activeModule.id });
     setDraft('');
@@ -175,7 +175,7 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
 
   async function removeMemory(id) {
     if (role !== 'admin') return;
-    if (typeof window !== 'undefined' && !window.confirm('Excluir memória da Daiane?')) return;
+    if (typeof window !== 'undefined' && !window.confirm('Excluir memória da RICK AI?')) return;
     try {
       await deleteRickAiMemory(id);
       setMemories((current) => current.filter((memory) => memory.id !== id));
@@ -226,20 +226,20 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
       const accepted = setData(next);
       if (accepted === false) return;
       setMessages((current) => [...current, { role: 'assistant', content: 'Feito. Agora sim eu alterei porque você confirmou 😏' }]);
-      notify?.('Ação da Daiane confirmada.');
+      notify?.('Ação da RICK AI confirmada.');
       setPendingAction(null);
-    } catch (error) { notify?.(error.message || 'Não foi possível aplicar a ação da Daiane.'); }
+    } catch (error) { notify?.(error.message || 'Não foi possível aplicar a ação da RICK AI.'); }
   }
 
   return <div className="rick-ai-root">
-    {open && <section className="rick-ai-panel" aria-label="Daiane">
+    {open && <section className="rick-ai-panel" aria-label="RICK AI">
       <header className="rick-ai-header">
-        <div className="rick-ai-identity"><span className="rick-ai-orb" aria-hidden="true"><img src={core} alt="" width="38" height="38"/></span><div><strong>DAIANE</strong><small><span className="rick-ai-status-dot"/>{loading ? 'pensando...' : conversationId ? 'memória ativa · online' : 'nova conversa · online'}</small></div></div>
+        <div className="rick-ai-identity"><span className="rick-ai-orb" aria-hidden="true"><img src={core} alt="" width="38" height="38"/></span><div><strong>RICK AI</strong><small><span className="rick-ai-status-dot"/>{loading ? 'pensando...' : conversationId ? 'memória ativa · online' : 'nova conversa · online'}</small></div></div>
         <div className="rick-ai-header-actions">
           <button className="rick-ai-icon" aria-label="Memórias" aria-expanded={memoryListOpen} onClick={() => setMemoryListOpen((value) => !value)}><Layers3 size={19}/><span>Memórias</span></button>
           <button className="rick-ai-icon" aria-label="Histórico de conversas" aria-expanded={conversationListOpen} onClick={() => setConversationListOpen((value) => !value)}><History size={19}/><span>Histórico</span></button>
           <button className="rick-ai-icon" aria-label="Nova conversa" onClick={startNewConversation}><Plus size={19}/><span>Nova conversa</span></button>
-          <button className="rick-ai-icon" aria-label="Fechar Daiane" onClick={() => setOpen(false)}><X size={19}/><span>Fechar</span></button>
+          <button className="rick-ai-icon" aria-label="Fechar RICK AI" onClick={() => setOpen(false)}><X size={19}/><span>Fechar</span></button>
         </div>
       </header>
 
@@ -264,7 +264,7 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
         {priorities.length ? priorities.map((item) => <div className={`rick-ai-priority-row ${item.bucket}`} key={item.id}><small>{priorityLabels[item.bucket]}</small><div><strong>{item.title}</strong><p>{item.reason}</p></div></div>) : <p className="rick-ai-priority-empty">Nada urgente o bastante pra virar prioridade agora.</p>}
       </div>}
       {briefingOpen && role === 'admin' && <div className="rick-ai-briefing-card">
-        <div className="rick-ai-briefing-head"><strong>BRIEFING DA DAIANE</strong><span>leitura local do OS</span></div>
+        <div className="rick-ai-briefing-head"><strong>BRIEFING DA RICK AI</strong><span>leitura local do OS</span></div>
         <div className="rick-ai-briefing-section"><small>FOCO AGORA</small>{briefing.focus ? <div className="rick-ai-briefing-focus"><strong>{briefing.focus.title}</strong>{briefing.focus.reason && <p>{briefing.focus.reason}</p>}<span>{briefing.focus.module}</span></div> : <p className="rick-ai-briefing-empty">Nenhum foco urgente apareceu agora.</p>}</div>
         {briefing.signals.length > 0 && <div className="rick-ai-briefing-section"><small>SINAIS</small>{briefing.signals.map((signal) => <p className="rick-ai-briefing-signal" key={signal.id}>{signal.text}</p>)}</div>}
         {briefing.changes.length > 0 && <div className="rick-ai-briefing-section"><small>MUDANÇAS RECENTES</small>{briefing.changes.map((change) => <p className="rick-ai-briefing-change" key={change.id}>{change.text}</p>)}</div>}
@@ -273,19 +273,19 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
 
       {conversationListOpen && <div className="rick-ai-conversation-list"><div className="rick-ai-conversation-list-title"><strong>Conversas recentes</strong><button type="button" onClick={startNewConversation}><Plus size={14}/> Nova</button></div>{conversations.length ? conversations.map((conversation) => <button type="button" key={conversation.id} className={conversation.id === conversationId ? 'active' : ''} onClick={() => switchConversation(conversation.id)}><span>{conversation.title}</span><small>{shortDate(conversation.updatedAt)}</small></button>) : <p>Nenhuma conversa salva ainda.</p>}</div>}
 
-      {insightsVisible && <div className="rick-ai-insight-card"><div className="rick-ai-insight-card-head"><strong>DAIANE NOTOU</strong><button type="button" onClick={() => setDismissedInsightSignature(currentInsightSignature)}>Dispensar</button></div>{insights.map((insight) => <p key={insight.id}>{insight.message}</p>)}</div>}
-      {showModuleSuggestions && <div className="rick-ai-suggestions" aria-label="Sugestões da Daiane">{moduleSuggestions.map((suggestion) => <button type="button" className="rick-ai-suggestion-chip" key={suggestion} onClick={() => sendMessage(suggestion)}>{suggestion}</button>)}</div>}
+      {insightsVisible && <div className="rick-ai-insight-card"><div className="rick-ai-insight-card-head"><strong>RICK AI NOTOU</strong><button type="button" onClick={() => setDismissedInsightSignature(currentInsightSignature)}>Dispensar</button></div>{insights.map((insight) => <p key={insight.id}>{insight.message}</p>)}</div>}
+      {showModuleSuggestions && <div className="rick-ai-suggestions" aria-label="Sugestões da RICK AI">{moduleSuggestions.map((suggestion) => <button type="button" className="rick-ai-suggestion-chip" key={suggestion} onClick={() => sendMessage(suggestion)}>{suggestion}</button>)}</div>}
 
-      <div className="rick-ai-transcript-label">CONVERSA <span>DAIANE / {activeModule.label}</span></div>
-      <div className="rick-ai-messages" role="log" aria-label="Conversa com Daiane" aria-live="polite" aria-busy={loading}>{messages.map((messageItem, index) => <div key={`${messageItem.role}-${index}`} className={`rick-ai-message ${messageItem.role}`}><span className="rick-ai-message-author">{messageItem.role === 'assistant' ? <><img src={core} alt="" width="16" height="16"/> DAIANE</> : 'VOCÊ'}</span><div>{messageItem.content}</div></div>)}{loading && <div className="rick-ai-message assistant loading"><LoaderCircle size={15} className="rick-ai-spin"/> pensando</div>}</div>
+      <div className="rick-ai-transcript-label">CONVERSA <span>RICK AI / {activeModule.label}</span></div>
+      <div className="rick-ai-messages" role="log" aria-label="Conversa com RICK AI" aria-live="polite" aria-busy={loading}>{messages.map((messageItem, index) => <div key={`${messageItem.role}-${index}`} className={`rick-ai-message ${messageItem.role}`}><span className="rick-ai-message-author">{messageItem.role === 'assistant' ? <><img src={core} alt="" width="16" height="16"/> RICK AI</> : 'VOCÊ'}</span><div>{messageItem.content}</div></div>)}{loading && <div className="rick-ai-message assistant loading"><LoaderCircle size={15} className="rick-ai-spin"/> pensando</div>}</div>
 
       {role === 'admin' && !pendingAction && <div className="rick-ai-quick-actions"><strong>AÇÕES RÁPIDAS</strong><div>{moduleActions.map((actionDefinition) => <button type="button" key={actionDefinition.id} onClick={() => openQuickAction(actionDefinition)}>{actionDefinition.label}</button>)}</div></div>}
       {quickActionForm && !pendingAction && <form className="rick-ai-quick-form" onSubmit={submitQuickAction}><div><strong>{quickActionForm.label}</strong><button type="button" aria-label="Cancelar ação rápida" onClick={() => setQuickActionForm(null)}><X size={14}/></button></div>{quickActionForm.fields.includes('title') && <input name="title" placeholder={quickActionForm.id === 'add_project' ? 'Nome do projeto' : quickActionForm.id === 'add_workout' ? 'Nome do treino' : 'Título'} maxLength={140} required/>}{quickActionForm.fields.includes('amount') && <input name="amount" inputMode="decimal" placeholder="Valor (ex.: 32,50)" required/>}<button type="submit"><Check size={14}/> Preparar confirmação</button></form>}
-      {pendingAction && <div className="rick-ai-action-card"><small>A DAIANE QUER ALTERAR O OS</small><strong>{pendingAction.preview}</strong><p>Nada foi alterado ainda.</p><div><button type="button" className="rick-ai-cancel" onClick={() => setPendingAction(null)}>Cancelar</button><button type="button" className="rick-ai-confirm" onClick={confirmAction}><Check size={15}/> Confirmar</button></div></div>}
+      {pendingAction && <div className="rick-ai-action-card"><small>A RICK AI QUER ALTERAR O OS</small><strong>{pendingAction.preview}</strong><p>Nada foi alterado ainda.</p><div><button type="button" className="rick-ai-cancel" onClick={() => setPendingAction(null)}>Cancelar</button><button type="button" className="rick-ai-confirm" onClick={confirmAction}><Check size={15}/> Confirmar</button></div></div>}
       <div ref={messagesEndRef}/>
       </div>
-      <form className="rick-ai-composer" onSubmit={submit}><input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={role === 'admin' ? `Pergunte sobre ${activeModule.label}...` : 'Disponível no modo ADM'} disabled={role !== 'admin' || loading} maxLength={4000} aria-label="Mensagem para Daiane"/><button type="submit" aria-label="Enviar mensagem" disabled={!draft.trim() || loading || role !== 'admin'}><Send size={17}/></button></form>
+      <form className="rick-ai-composer" onSubmit={submit}><input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={role === 'admin' ? `Pergunte sobre ${activeModule.label}...` : 'Disponível no modo ADM'} disabled={role !== 'admin' || loading} maxLength={4000} aria-label="Mensagem para RICK AI"/><button type="submit" aria-label="Enviar mensagem" disabled={!draft.trim() || loading || role !== 'admin'}><Send size={17}/></button></form>
     </section>}
-    <button type="button" className={`rick-ai-launcher ${open ? 'active' : ''}`} aria-label={open ? 'Daiane aberta' : 'Abrir Daiane'} onClick={() => setOpen((value) => !value)}>{open ? <X size={22}/> : <MessageCircle size={23}/>} {!open && <span className="rick-ai-launcher-label">DAIANE</span>}{!open && insightsVisible && <span className="rick-ai-insight-badge">{insights.length}</span>}</button>
+    <button type="button" className={`rick-ai-launcher ${open ? 'active' : ''}`} aria-label={open ? 'RICK AI aberta' : 'Abrir RICK AI'} onClick={() => setOpen((value) => !value)}>{open ? <X size={22}/> : <MessageCircle size={23}/>} {!open && <span className="rick-ai-launcher-label">RICK AI</span>}{!open && insightsVisible && <span className="rick-ai-insight-badge">{insights.length}</span>}</button>
   </div>;
 }
