@@ -1,24 +1,22 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { validatePendingAction, applyConfirmedAction } from '../src/rick-ai/contracts.mjs';
+import { initialData } from '../src/models.mjs';
 
 function baseData() {
   return {
-    name: 'Rick', focusCount: 0, focusSeconds: 1500,
+    ...initialData,
     tasks: [
       { id: 'task-1', title: 'Estudar React', description: '', tag: 'Estudo', module: 'study', progress: 40, done: false },
       { id: 'task-2', title: 'Organizar OS', description: '', tag: 'Pessoal', module: 'home', progress: 20, done: false },
     ],
-    topics: [], resources: [], runs: [], body: [], workouts: [], runningGoals: {},
     transactions: [
       { id: 'tx-1', title: 'Almoço', amount: 38, type: 'expense', date: '2026-11-03' },
       { id: 'tx-2', title: 'Salário', amount: 2000, type: 'income', date: '2026-11-03' },
     ],
-    pc: [], style: [], projects: [
+    projects: [
       { id: 'project-1', title: 'NØVA STREET', description: '', tech: 'React', url: '', status: 'doing' },
     ],
-    evolution: [], media: [], snippets: [],
-    systemProgress: { backupDays: [], diagnosticDays: [] },
   };
 }
 
