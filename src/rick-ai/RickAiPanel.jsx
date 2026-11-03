@@ -4,6 +4,7 @@ import { applyConfirmedAction, buildRickAiSnapshot } from './contracts.mjs';
 import { listRickAiConversations, loadRickAiHistory, saveRickAiExchange, sendRickAiMessage } from './client.mjs';
 import { buildRickAiInsights } from './insights.mjs';
 import { buildRickAiLocalAction, getRickAiModuleActions } from './module-actions.mjs';
+import { buildRickAiModuleSummary } from './module-summary.mjs';
 import { getRickAiModule, getRickAiSuggestions } from './modules.mjs';
 import './rick-ai.css';
 
@@ -26,12 +27,14 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
   const [loading, setLoading] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
   const [quickActionForm, setQuickActionForm] = useState(null);
+  const [summaryOpen, setSummaryOpen] = useState(false);
   const [dismissedInsightSignature, setDismissedInsightSignature] = useState('');
   const messagesEndRef = useRef(null);
   const snapshot = useMemo(() => buildRickAiSnapshot(data, page), [data, page]);
   const activeModule = useMemo(() => getRickAiModule(page), [page]);
   const moduleSuggestions = useMemo(() => getRickAiSuggestions(page), [page]);
   const moduleActions = useMemo(() => getRickAiModuleActions(page), [page]);
+  const moduleSummary = useMemo(() => buildRickAiModuleSummary(snapshot), [snapshot]);
   const insights = useMemo(() => role === 'admin' ? buildRickAiInsights(snapshot) : [], [snapshot, role]);
   const currentInsightSignature = useMemo(() => insights.map((item) => item.id).join('|'), [insights]);
   const insightsVisible = insights.length > 0 && currentInsightSignature !== dismissedInsightSignature;
@@ -74,6 +77,7 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
 
   useEffect(() => {
     setQuickActionForm(null);
+    setSummaryOpen(false);
   }, [page]);
 
   function startNewConversation() {
@@ -180,7 +184,13 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
       <div className="rick-ai-module-context">
         <strong>{activeModule.label}</strong>
         <span>{activeModule.focus}</span>
+        {role === 'admin' && <button type="button" className={summaryOpen ? 'active' : ''} onClick={() => setSummaryOpen((value) => !value)}>Resumo</button>}
       </div>
+
+      {summaryOpen && role === 'admin' && <div className="rick-ai-summary-card">
+        <div className="rick-ai-summary-head"><strong>RESUMO DO MÓDULO</strong><span>{activeModule.label}</span></div>
+        {moduleSummary.map((summaryItem) => <div className={`rick-ai-summary-row ${summaryItem.tone}`} key={summaryItem.id}><small>{summaryItem.label}</small><strong>{summaryItem.value}</strong></div>)}
+      </div>}
 
       {conversationListOpen && <div className="rick-ai-conversation-list">
         <div className="rick-ai-conversation-list-title"><strong>Conversas recentes</strong><button type="button" onClick={startNewConversation}><Plus size={14}/> Nova</button></div>
