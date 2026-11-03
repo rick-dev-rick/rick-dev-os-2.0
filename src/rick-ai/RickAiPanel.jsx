@@ -9,8 +9,10 @@ import { buildRickAiChangeSnapshot, diffRickAiChanges, loadRickAiChangeBaseline,
 import { extractRickAiMemoryCandidate } from './memory.mjs';
 import { getRickAiModule, getRickAiSuggestions } from './modules.mjs';
 import { buildRickAiPriorities } from './priority.mjs';
+import { buildRickAiBriefing } from './briefing.mjs';
 import core from './assets/core.mjs';
 import './rick-ai.css';
+import './briefing.css';
 
 const greeting = { role: 'assistant', content: 'Tô por aqui, Rick. Manda o que você quer analisar 😏' };
 const memoryLabels = { preference: 'Preferência', goal: 'Meta', decision: 'Decisão', priority: 'Prioridade', routine: 'Rotina', project: 'Projeto' };
@@ -38,6 +40,7 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [changesOpen, setChangesOpen] = useState(false);
   const [priorityOpen, setPriorityOpen] = useState(false);
+  const [briefingOpen, setBriefingOpen] = useState(false);
   const [changeBaseline, setChangeBaseline] = useState(null);
   const [reviewedChanges, setReviewedChanges] = useState([]);
   const [dismissedInsightSignature, setDismissedInsightSignature] = useState('');
@@ -54,6 +57,7 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
   const insightsVisible = insights.length > 0 && currentInsightSignature !== dismissedInsightSignature;
   const longTermMemory = useMemo(() => memories.slice(0, 20).map((memory) => ({ category: memory.category, content: memory.content })), [memories]);
   const priorities = useMemo(() => role === 'admin' ? buildRickAiPriorities(snapshot, longTermMemory) : [], [snapshot, longTermMemory, role]);
+  const briefing = useMemo(() => buildRickAiBriefing(snapshot, priorities, insights, pendingChanges), [snapshot, priorities, insights, pendingChanges]);
   const showModuleSuggestions = role === 'admin' && !loading && !conversationId && messages.length === 1 && messages[0]?.role === 'assistant' && messages[0]?.content === greeting.content;
 
   async function refreshConversations() {
@@ -95,6 +99,7 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
     setSummaryOpen(false);
     setChangesOpen(false);
     setPriorityOpen(false);
+    setBriefingOpen(false);
     setReviewedChanges([]);
   }, [page]);
 
@@ -241,6 +246,7 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
         {role === 'admin' && <button type="button" className={summaryOpen ? 'active' : ''} aria-expanded={summaryOpen} onClick={() => setSummaryOpen((value) => !value)}>Resumo</button>}
         {role === 'admin' && <button type="button" className={changesOpen ? 'active' : ''} aria-expanded={changesOpen} onClick={reviewChanges}>Mudanças{pendingChanges.length > 0 && <b className="rick-ai-changes-badge">{pendingChanges.length}</b>}</button>}
         {role === 'admin' && <button type="button" className={priorityOpen ? 'active' : ''} aria-expanded={priorityOpen} onClick={() => setPriorityOpen((value) => !value)}>Prioridade</button>}
+        {role === 'admin' && <button type="button" className={briefingOpen ? 'active' : ''} aria-expanded={briefingOpen} onClick={() => setBriefingOpen((value) => !value)}>Briefing</button>}
       </div>
 
       <div className="rick-ai-body">
@@ -254,6 +260,13 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
       {priorityOpen && role === 'admin' && <div className="rick-ai-priority-card">
         <div className="rick-ai-priority-head"><strong>PRIORIDADE AGORA</strong><span>local · sem API</span></div>
         {priorities.length ? priorities.map((item) => <div className={`rick-ai-priority-row ${item.bucket}`} key={item.id}><small>{priorityLabels[item.bucket]}</small><div><strong>{item.title}</strong><p>{item.reason}</p></div></div>) : <p className="rick-ai-priority-empty">Nada urgente o bastante pra virar prioridade agora.</p>}
+      </div>}
+      {briefingOpen && role === 'admin' && <div className="rick-ai-briefing-card">
+        <div className="rick-ai-briefing-head"><strong>BRIEFING DA RICK IA</strong><span>leitura local do OS</span></div>
+        <div className="rick-ai-briefing-section"><small>FOCO AGORA</small>{briefing.focus ? <div className="rick-ai-briefing-focus"><strong>{briefing.focus.title}</strong>{briefing.focus.reason && <p>{briefing.focus.reason}</p>}<span>{briefing.focus.module}</span></div> : <p className="rick-ai-briefing-empty">Nenhum foco urgente apareceu agora.</p>}</div>
+        {briefing.signals.length > 0 && <div className="rick-ai-briefing-section"><small>SINAIS</small>{briefing.signals.map((signal) => <p className="rick-ai-briefing-signal" key={signal.id}>{signal.text}</p>)}</div>}
+        {briefing.changes.length > 0 && <div className="rick-ai-briefing-section"><small>MUDANÇAS RECENTES</small>{briefing.changes.map((change) => <p className="rick-ai-briefing-change" key={change.id}>{change.text}</p>)}</div>}
+        <p className="rick-ai-briefing-conclusion">{briefing.conclusion}</p>
       </div>}
 
       {conversationListOpen && <div className="rick-ai-conversation-list"><div className="rick-ai-conversation-list-title"><strong>Conversas recentes</strong><button type="button" onClick={startNewConversation}><Plus size={14}/> Nova</button></div>{conversations.length ? conversations.map((conversation) => <button type="button" key={conversation.id} className={conversation.id === conversationId ? 'active' : ''} onClick={() => switchConversation(conversation.id)}><span>{conversation.title}</span><small>{shortDate(conversation.updatedAt)}</small></button>) : <p>Nenhuma conversa salva ainda.</p>}</div>}
