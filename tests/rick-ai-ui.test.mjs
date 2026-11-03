@@ -164,3 +164,25 @@ test('trocar de módulo fecha mudanças e carrega baseline separado', () => {
   assert.match(panel, /useEffect\(\(\) => \{[\s\S]*setChangesOpen\(false\)[\s\S]*\}, \[page\]\)/);
   assert.match(panel, /loadRickAiChangeBaseline\(activeModule\.id\)/);
 });
+
+test('painel oferece prioridade inteligente local usando snapshot e memórias', () => {
+  assert.match(panel, /buildRickAiPriorities/);
+  assert.match(panel, /const \[priorityOpen, setPriorityOpen\] = useState\(false\)/);
+  assert.match(panel, /const priorities = useMemo/);
+  assert.match(panel, /PRIORIDADE AGORA/);
+  assert.match(panel, />Prioridade</);
+  assert.match(panel, /rick-ai-priority-card/);
+  assert.match(styles, /\.rick-ai-priority-card\{/);
+  assert.doesNotMatch(panel, /function[^\n]*Priority[\s\S]{0,500}sendRickAiMessage/);
+});
+
+test('prioridade mostra Agora, Depois e Pode esperar quando houver candidatos', () => {
+  assert.match(panel, /Agora/);
+  assert.match(panel, /Depois/);
+  assert.match(panel, /Pode esperar/);
+  assert.match(styles, /\.rick-ai-priority-row/);
+});
+
+test('trocar de módulo fecha o card de prioridade', () => {
+  assert.match(panel, /useEffect\(\(\) => \{[\s\S]*setPriorityOpen\(false\)[\s\S]*\}, \[page\]\)/);
+});
