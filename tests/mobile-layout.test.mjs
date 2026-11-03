@@ -2,12 +2,18 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+const entry = await readFile(new URL('../src/entry.jsx', import.meta.url), 'utf8');
 const mobile = await readFile(new URL('../src/mobile.css', import.meta.url), 'utf8');
 const home = await readFile(new URL('../src/Home.jsx', import.meta.url), 'utf8');
 
-test('carrega overrides mobile no documento', () => {
-  assert.match(index, /<link rel="stylesheet" href="\/src\/mobile\.css"\s*\/>/);
+test('carrega overrides mobile depois dos estilos principais', () => {
+  const style = entry.indexOf('import "./style.css"');
+  const modern = entry.indexOf('import "./modern.css"');
+  const mobileImport = entry.indexOf('import "./mobile.css"');
+
+  assert.ok(style >= 0);
+  assert.ok(modern > style);
+  assert.ok(mobileImport > modern);
 });
 
 test('mobile impede overflow horizontal e respeita safe area', () => {
