@@ -180,7 +180,7 @@ Deno.serve(async (req: Request) => {
       `MENSAGEM DO USUÁRIO: ${message}`,
     ].join('\n\n');
 
-    const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+    let aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
       method: 'POST',
       headers: { 'x-goog-api-key': geminiKey, 'Content-Type': 'application/json' },
       body: JSON.stringify({
