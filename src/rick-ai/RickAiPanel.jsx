@@ -47,6 +47,7 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
   const [dismissedInsightSignature, setDismissedInsightSignature] = useState('');
   const messagesEndRef = useRef(null);
   const recognitionRef = useRef(null);
+  const voiceReplyRef = useRef(false);
   const [listening, setListening] = useState(false);
   const [readAloud, setReadAloud] = useState(false);
   const voiceInputSupported = typeof window !== 'undefined' && Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
@@ -61,7 +62,7 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
     speech.continuous = false;
     speech.onresult = (event) => {
       const heard = Array.from(event.results).map((r) => r[0]?.transcript || '').join(' ').trim();
-      if (heard) setDraft(heard);
+      if (heard) { voiceReplyRef.current = true; void sendMessage(heard); }
     };
     speech.onerror = (event) => {
       if (event.error === 'not-allowed') notify?.('Autorize o microfone para ditar mensagens.');
@@ -179,7 +180,7 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
       const reply = await sendRickAiMessage({ message: cleanMessage, page: activeModule.id, snapshot: { ...snapshot, rickAiRecentConversation: recentConversation, rickAiLongTermMemory: longTermMemory, rickAiIdentityContext: identityContext }, conversationId });
       setMessages((current) => [...current, { role: 'assistant', content: reply.message }]);
       setPendingAction(reply.pendingAction);
-      if (readAloud && voiceOutputSupported) {
+      if ((readAloud || voiceReplyRef.current) && voiceOutputSupported) {
         window.speechSynthesis.cancel();
         const speech = new SpeechSynthesisUtterance(reply.message);
         speech.lang = 'pt-BR';
@@ -187,6 +188,7 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
         speech.voice = window.speechSynthesis.getVoices().find((voice) => voice.lang.toLowerCase() === 'pt-br') || null;
         window.speechSynthesis.speak(speech);
       }
+      voiceReplyRef.current = false;
       try {
         const savedConversationId = await saveRickAiExchange({ conversationId, userMessage: cleanMessage, assistantMessage: reply.message });
         setConversationId(savedConversationId);
@@ -204,6 +206,7 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
         }
       }
     } catch (error) {
+      voiceReplyRef.current = false;
       setMessages((current) => [...current, { role: 'assistant', content: error.message || 'Deu ruim aqui por um instante. Tenta de novo.' }]);
     } finally { setLoading(false); }
   }
