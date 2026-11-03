@@ -177,7 +177,17 @@ export function parseRickAiVoiceResponse(data) {
 export async function sendRickAiMessage(input) {
   const body = buildRickAiRequest(input);
   const { data, error } = await client.functions.invoke('rick-ai', { body });
-  if (error) throw Error(error.message || 'Não foi possível falar com a Rick IA.');
+  if (error) {
+    let detail = '';
+    try {
+      const response = error.context;
+      if (response && typeof response.json === 'function') {
+        const payload = await response.json();
+        detail = typeof payload?.error === 'string' ? payload.error : '';
+      }
+    } catch { /* O Supabase pode não retornar um corpo JSON. */ }
+    throw Error(detail || error.message || 'Não foi possível falar com a Rick IA.');
+  }
   return parseRickAiResponse(data);
 }
 
