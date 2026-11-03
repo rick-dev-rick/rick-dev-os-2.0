@@ -23,12 +23,15 @@ test('modo convidado não consegue enviar mensagens privadas', () => {
   assert.match(panel, /Disponível no modo ADM/);
 });
 
-test('painel fica em modo texto sem controles ou chamadas de voz', () => {
+test('painel oferece voz opcional sem exigir gravação contínua', () => {
+  assert.match(panel, /toggleVoiceInput/);
+  assert.match(panel, /SpeechRecognition/);
+  assert.match(panel, /aria-label=\{listening \? "Parar ditado" : "Ditar mensagem"\}/);
+  assert.match(panel, /readAloud/);
+  assert.match(panel, /speechSynthesis/);
+  assert.match(panel, /role !== "admin"/);
   assert.doesNotMatch(panel, /MediaRecorder/);
   assert.doesNotMatch(panel, /navigator\.mediaDevices\.getUserMedia/);
-  assert.doesNotMatch(panel, /\bMic\b|\bMicOff\b/);
-  assert.doesNotMatch(panel, /Volume2|VolumeX/);
-  assert.doesNotMatch(panel, /transcribeRickAiAudio|speakRickAiText/);
 });
 
 test('launcher da Rick IA fica no canto inferior esquerdo', () => {
