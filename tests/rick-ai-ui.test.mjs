@@ -70,8 +70,8 @@ test('painel calcula insights locais sem chamar a API automaticamente', () => {
   assert.doesNotMatch(panel, /useEffect\([\s\S]{0,500}sendRickAiMessage/);
 });
 
-test('painel mostra cartão RICK IA NOTOU e permite dispensar o conjunto atual', () => {
-  assert.match(panel, /RICK IA NOTOU/);
+test('painel mostra cartão DAIANE NOTOU e permite dispensar o conjunto atual', () => {
+  assert.match(panel, /DAIANE NOTOU/);
   assert.match(panel, /Dispensar/);
   assert.match(panel, /dismissedInsightSignature/);
   assert.match(panel, /currentInsightSignature/);
@@ -192,7 +192,7 @@ test('painel oferece briefing manual local sem chamar a API', () => {
   assert.match(panel, /buildRickAiBriefing/);
   assert.match(panel, /const \[briefingOpen, setBriefingOpen\] = useState\(false\)/);
   assert.match(panel, /const briefing = useMemo/);
-  assert.match(panel, /BRIEFING DA RICK IA/);
+  assert.match(panel, /BRIEFING DA DAIANE/);
   assert.match(panel, />Briefing</);
   assert.match(panel, /rick-ai-briefing-card/);
   assert.match(briefingStyles, /\.rick-ai-briefing-card\{/);
