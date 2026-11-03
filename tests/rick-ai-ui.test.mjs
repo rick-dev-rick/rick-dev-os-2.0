@@ -135,3 +135,32 @@ test('painel oferece resumo local do módulo sem chamar a API', () => {
 test('trocar de módulo fecha o resumo local aberto', () => {
   assert.match(panel, /useEffect\(\(\) => \{[\s\S]*setSummaryOpen\(false\)[\s\S]*\}, \[page\]\)/);
 });
+
+test('painel compara mudanças locais por módulo sem chamar a API', () => {
+  assert.match(panel, /buildRickAiChangeSnapshot/);
+  assert.match(panel, /diffRickAiChanges/);
+  assert.match(panel, /loadRickAiChangeBaseline/);
+  assert.match(panel, /saveRickAiChangeBaseline/);
+  assert.match(panel, /const \[changesOpen, setChangesOpen\] = useState\(false\)/);
+  assert.match(panel, /MUDOU DESDE A ÚLTIMA VEZ/);
+  assert.match(panel, />Mudanças/);
+  assert.match(styles, /\.rick-ai-changes-card\{/);
+  assert.doesNotMatch(panel, /function reviewChanges[\s\S]{0,500}sendRickAiMessage/);
+});
+
+test('mudanças exibem badge e revisão atualiza a referência local', () => {
+  assert.match(panel, /rick-ai-changes-badge/);
+  assert.match(panel, /reviewChanges/);
+  assert.match(panel, /setReviewedChanges/);
+  assert.match(panel, /saveRickAiChangeBaseline\(activeModule\.id, currentChangeSnapshot\)/);
+  assert.match(styles, /\.rick-ai-changes-badge\{/);
+});
+
+test('primeira visita cria baseline local sem gerar alerta', () => {
+  assert.match(panel, /if \(!baseline\)[\s\S]*saveRickAiChangeBaseline/);
+});
+
+test('trocar de módulo fecha mudanças e carrega baseline separado', () => {
+  assert.match(panel, /useEffect\(\(\) => \{[\s\S]*setChangesOpen\(false\)[\s\S]*\}, \[page\]\)/);
+  assert.match(panel, /loadRickAiChangeBaseline\(activeModule\.id\)/);
+});
