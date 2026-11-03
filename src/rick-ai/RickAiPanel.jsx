@@ -5,6 +5,7 @@ import { listRickAiConversations, loadRickAiHistory, saveRickAiExchange, sendRic
 import { buildRickAiInsights } from './insights.mjs';
 import { buildRickAiLocalAction, getRickAiModuleActions } from './module-actions.mjs';
 import { buildRickAiModuleSummary } from './module-summary.mjs';
+import { buildRickAiChangeSnapshot, diffRickAiChanges, loadRickAiChangeBaseline, saveRickAiChangeBaseline } from './changes.mjs';
 import { getRickAiModule, getRickAiSuggestions } from './modules.mjs';
 import './rick-ai.css';
 
@@ -28,6 +29,9 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
   const [pendingAction, setPendingAction] = useState(null);
   const [quickActionForm, setQuickActionForm] = useState(null);
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const [changesOpen, setChangesOpen] = useState(false);
+  const [changeBaseline, setChangeBaseline] = useState(null);
+  const [reviewedChanges, setReviewedChanges] = useState([]);
   const [dismissedInsightSignature, setDismissedInsightSignature] = useState('');
   const messagesEndRef = useRef(null);
   const snapshot = useMemo(() => buildRickAiSnapshot(data, page), [data, page]);
@@ -35,6 +39,8 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
   const moduleSuggestions = useMemo(() => getRickAiSuggestions(page), [page]);
   const moduleActions = useMemo(() => getRickAiModuleActions(page), [page]);
   const moduleSummary = useMemo(() => buildRickAiModuleSummary(snapshot), [snapshot]);
+  const currentChangeSnapshot = useMemo(() => buildRickAiChangeSnapshot(snapshot, activeModule.id), [snapshot, activeModule.id]);
+  const pendingChanges = useMemo(() => changeBaseline ? diffRickAiChanges(changeBaseline, currentChangeSnapshot, activeModule.id) : [], [changeBaseline, currentChangeSnapshot, activeModule.id]);
   const insights = useMemo(() => role === 'admin' ? buildRickAiInsights(snapshot) : [], [snapshot, role]);
   const currentInsightSignature = useMemo(() => insights.map((item) => item.id).join('|'), [insights]);
   const insightsVisible = insights.length > 0 && currentInsightSignature !== dismissedInsightSignature;
@@ -78,7 +84,20 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
   useEffect(() => {
     setQuickActionForm(null);
     setSummaryOpen(false);
+    setChangesOpen(false);
+    setReviewedChanges([]);
   }, [page]);
+
+  useEffect(() => {
+    if (role !== 'admin') return;
+    const baseline = loadRickAiChangeBaseline(activeModule.id);
+    if (!baseline) {
+      saveRickAiChangeBaseline(activeModule.id, currentChangeSnapshot);
+      setChangeBaseline(currentChangeSnapshot);
+      return;
+    }
+    setChangeBaseline(baseline);
+  }, [activeModule.id, role]);
 
   function startNewConversation() {
     if (loading) return;
@@ -128,6 +147,18 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
   }
 
   async function submit(event) { event?.preventDefault(); await sendMessage(draft); }
+
+  function reviewChanges() {
+    if (role !== 'admin') return;
+    if (changesOpen) {
+      setChangesOpen(false);
+      return;
+    }
+    setReviewedChanges(pendingChanges);
+    setChangesOpen(true);
+    saveRickAiChangeBaseline(activeModule.id, currentChangeSnapshot);
+    setChangeBaseline(currentChangeSnapshot);
+  }
 
   function openQuickAction(actionDefinition) {
     if (role !== 'admin' || pendingAction) return;
@@ -185,11 +216,17 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
         <strong>{activeModule.label}</strong>
         <span>{activeModule.focus}</span>
         {role === 'admin' && <button type="button" className={summaryOpen ? 'active' : ''} onClick={() => setSummaryOpen((value) => !value)}>Resumo</button>}
+        {role === 'admin' && <button type="button" className={changesOpen ? 'active' : ''} onClick={reviewChanges}>Mudanças{pendingChanges.length > 0 && <b className="rick-ai-changes-badge">{pendingChanges.length}</b>}</button>}
       </div>
 
       {summaryOpen && role === 'admin' && <div className="rick-ai-summary-card">
         <div className="rick-ai-summary-head"><strong>RESUMO DO MÓDULO</strong><span>{activeModule.label}</span></div>
         {moduleSummary.map((summaryItem) => <div className={`rick-ai-summary-row ${summaryItem.tone}`} key={summaryItem.id}><small>{summaryItem.label}</small><strong>{summaryItem.value}</strong></div>)}
+      </div>}
+
+      {changesOpen && role === 'admin' && <div className="rick-ai-changes-card">
+        <div className="rick-ai-changes-head"><strong>MUDOU DESDE A ÚLTIMA VEZ</strong><span>{activeModule.label}</span></div>
+        {reviewedChanges.length ? reviewedChanges.map((change) => <p key={change.id}>{change.message}</p>) : <p>Nada novo por aqui desde a última revisão.</p>}
       </div>}
 
       {conversationListOpen && <div className="rick-ai-conversation-list">
