@@ -90,7 +90,7 @@ export function validatePendingAction(raw) {
         date: payload.date,
         distanceKm: payload.distanceKm,
         durationSeconds: payload.durationSeconds,
-        type: payload.runType,
+        type: payload.runType ?? payload.type,
         place: payload.place,
         effort: payload.effort,
         note: payload.note || '',
