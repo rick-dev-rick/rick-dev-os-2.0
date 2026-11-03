@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Layers3, Check, History, LoaderCircle, MessageCircle, Plus, Send, Trash2, X } from 'lucide-react';
+import { Layers3, Check, History, LoaderCircle, MessageCircle, Mic, MicOff, Volume2, VolumeX, Plus, Send, Trash2, X } from 'lucide-react';
 import { applyConfirmedAction, buildRickAiSnapshot } from './contracts.mjs';
 import { deleteRickAiMemory, listRickAiConversations, listRickAiMemories, loadRickAiHistory, saveRickAiExchange, saveRickAiMemory, sendRickAiMessage } from './client.mjs';
 import { buildRickAiInsights } from './insights.mjs';
@@ -46,6 +46,33 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
   const [reviewedChanges, setReviewedChanges] = useState([]);
   const [dismissedInsightSignature, setDismissedInsightSignature] = useState('');
   const messagesEndRef = useRef(null);
+  const recognitionRef = useRef(null);
+  const [listening, setListening] = useState(false);
+  const [readAloud, setReadAloud] = useState(false);
+  const voiceInputSupported = typeof window !== 'undefined' && Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
+  const voiceOutputSupported = typeof window !== 'undefined' && Boolean(window.speechSynthesis);
+  function toggleVoiceInput() {
+    if (listening) { recognitionRef.current?.stop(); return; }
+    if (!voiceInputSupported || loading || role !== 'admin') return;
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const speech = new Recognition();
+    speech.lang = 'pt-BR';
+    speech.interimResults = false;
+    speech.continuous = false;
+    speech.onresult = (event) => {
+      const heard = Array.from(event.results).map((r) => r[0]?.transcript || '').join(' ').trim();
+      if (heard) setDraft(heard);
+    };
+    speech.onerror = (event) => {
+      if (event.error === 'not-allowed') notify?.('Autorize o microfone para ditar mensagens.');
+      else if (!['aborted', 'no-speech'].includes(event.error)) notify?.('Não consegui entender o áudio. Tente novamente.');
+    };
+    speech.onend = () => { setListening(false); recognitionRef.current = null; };
+    recognitionRef.current = speech;
+    try { speech.start(); setListening(true); } catch { notify?.('O navegador não permitiu iniciar o microfone.'); }
+  }
+  useEffect(() => () => { recognitionRef.current?.abort(); if (typeof window !== 'undefined') window.speechSynthesis?.cancel(); }, []);
+  useEffect(() => { if (!open) { recognitionRef.current?.abort(); if (typeof window !== 'undefined') window.speechSynthesis?.cancel(); } }, [open]);
   const snapshot = useMemo(() => buildRickAiSnapshot(data, page), [data, page]);
   const activeModule = useMemo(() => getRickAiModule(page), [page]);
   const moduleSuggestions = useMemo(() => getRickAiSuggestions(page), [page]);
@@ -152,6 +179,14 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
       const reply = await sendRickAiMessage({ message: cleanMessage, page: activeModule.id, snapshot: { ...snapshot, rickAiRecentConversation: recentConversation, rickAiLongTermMemory: longTermMemory, rickAiIdentityContext: identityContext }, conversationId });
       setMessages((current) => [...current, { role: 'assistant', content: reply.message }]);
       setPendingAction(reply.pendingAction);
+      if (readAloud && voiceOutputSupported) {
+        window.speechSynthesis.cancel();
+        const speech = new SpeechSynthesisUtterance(reply.message);
+        speech.lang = 'pt-BR';
+        speech.rate = 1.02;
+        speech.voice = window.speechSynthesis.getVoices().find((voice) => voice.lang.toLowerCase() === 'pt-br') || null;
+        window.speechSynthesis.speak(speech);
+      }
       try {
         const savedConversationId = await saveRickAiExchange({ conversationId, userMessage: cleanMessage, assistantMessage: reply.message });
         setConversationId(savedConversationId);
@@ -284,7 +319,7 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
       {pendingAction && <div className="rick-ai-action-card"><small>A RICK AI QUER ALTERAR O OS</small><strong>{pendingAction.preview}</strong><p>Nada foi alterado ainda.</p><div><button type="button" className="rick-ai-cancel" onClick={() => setPendingAction(null)}>Cancelar</button><button type="button" className="rick-ai-confirm" onClick={confirmAction}><Check size={15}/> Confirmar</button></div></div>}
       <div ref={messagesEndRef}/>
       </div>
-      <form className="rick-ai-composer" onSubmit={submit}><input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={role === 'admin' ? `Pergunte sobre ${activeModule.label}...` : 'Disponível no modo ADM'} disabled={role !== 'admin' || loading} maxLength={4000} aria-label="Mensagem para RICK AI"/><button type="submit" aria-label="Enviar mensagem" disabled={!draft.trim() || loading || role !== 'admin'}><Send size={17}/></button></form>
+      <form className="rick-ai-composer" onSubmit={submit}><button type="button" className="rick-ai-voice-btn" onClick={toggleVoiceInput} disabled={!voiceInputSupported || role !== "admin" || loading} aria-label={listening ? "Parar ditado" : "Ditar mensagem"} title={voiceInputSupported ? "Ditar mensagem" : "Voz indisponível neste navegador"}>{listening ? <MicOff size={18}/> : <Mic size={18}/>}</button><button type="button" className="rick-ai-voice-btn" onClick={() => { setReadAloud((v) => !v); window.speechSynthesis?.cancel(); }} disabled={!voiceOutputSupported || role !== "admin"} aria-label={readAloud ? "Desativar voz" : "Ler respostas em voz alta"} aria-pressed={readAloud}>{readAloud ? <Volume2 size={18}/> : <VolumeX size={18}/>}</button><input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={role === 'admin' ? `Pergunte sobre ${activeModule.label}...` : 'Disponível no modo ADM'} disabled={role !== 'admin' || loading} maxLength={4000} aria-label="Mensagem para RICK AI"/><button type="submit" aria-label="Enviar mensagem" disabled={!draft.trim() || loading || role !== 'admin'}><Send size={17}/></button></form>
     </section>}
     <button type="button" className={`rick-ai-launcher ${open ? 'active' : ''}`} aria-label={open ? 'RICK AI aberta' : 'Abrir RICK AI'} onClick={() => setOpen((value) => !value)}>{open ? <X size={22}/> : <MessageCircle size={23}/>} {!open && <span className="rick-ai-launcher-label">RICK AI</span>}{!open && insightsVisible && <span className="rick-ai-insight-badge">{insights.length}</span>}</button>
   </div>;
