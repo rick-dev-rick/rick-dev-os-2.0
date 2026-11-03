@@ -16,6 +16,7 @@ on:
       - feature/rick-ai-changes
       - feature/rick-ai-selective-memory
       - feature/rick-ai-priority
+      - feature/rick-ai-briefing
   workflow_dispatch:
 
 permissions:

@@ -5,6 +5,7 @@ import { readFile } from 'node:fs/promises';
 const main = await readFile(new URL('../src/main.jsx', import.meta.url), 'utf8');
 const panel = await readFile(new URL('../src/rick-ai/RickAiPanel.jsx', import.meta.url), 'utf8');
 const styles = await readFile(new URL('../src/rick-ai/rick-ai.css', import.meta.url), 'utf8');
+const briefingStyles = await readFile(new URL('../src/rick-ai/briefing.css', import.meta.url), 'utf8');
 
 test('App importa e renderiza RickAiPanel com o estado vivo do OS', () => {
   assert.match(main, /import RickAiPanel from ["']\.\/rick-ai\/RickAiPanel\.jsx["']/);
@@ -185,4 +186,28 @@ test('prioridade mostra Agora, Depois e Pode esperar quando houver candidatos', 
 
 test('trocar de módulo fecha o card de prioridade', () => {
   assert.match(panel, /useEffect\(\(\) => \{[\s\S]*setPriorityOpen\(false\)[\s\S]*\}, \[page\]\)/);
+});
+
+test('painel oferece briefing manual local sem chamar a API', () => {
+  assert.match(panel, /buildRickAiBriefing/);
+  assert.match(panel, /const \[briefingOpen, setBriefingOpen\] = useState\(false\)/);
+  assert.match(panel, /const briefing = useMemo/);
+  assert.match(panel, /BRIEFING DA RICK IA/);
+  assert.match(panel, />Briefing</);
+  assert.match(panel, /rick-ai-briefing-card/);
+  assert.match(briefingStyles, /\.rick-ai-briefing-card\{/);
+  assert.doesNotMatch(panel, /function[^\n]*Briefing[\s\S]{0,500}sendRickAiMessage/);
+});
+
+test('briefing mostra foco, sinais e mudanças quando existirem', () => {
+  assert.match(panel, /briefing\.focus/);
+  assert.match(panel, /briefing\.signals/);
+  assert.match(panel, /briefing\.changes/);
+  assert.match(panel, /FOCO AGORA/);
+  assert.match(panel, /SINAIS/);
+  assert.match(panel, /MUDANÇAS RECENTES/);
+});
+
+test('trocar de módulo fecha o briefing', () => {
+  assert.match(panel, /useEffect\(\(\) => \{[\s\S]*setBriefingOpen\(false\)[\s\S]*\}, \[page\]\)/);
 });

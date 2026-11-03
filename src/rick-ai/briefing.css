@@ -1,0 +1,14 @@
+.rick-ai-briefing-card{margin-top:16px;padding:17px;border:1px solid #53683b;border-radius:15px;background:linear-gradient(180deg,#1b2418 0%,#171d18 100%);display:grid;gap:14px}
+.rick-ai-briefing-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--rai-line)}
+.rick-ai-briefing-head strong{color:var(--rai-accent);font-size:10px;letter-spacing:.1em}
+.rick-ai-briefing-head span{color:var(--rai-muted);font-size:10px}
+.rick-ai-briefing-section{display:grid;gap:7px}
+.rick-ai-briefing-section>small{color:#879188;font-size:9px;font-weight:800;letter-spacing:.12em}
+.rick-ai-briefing-focus{padding:13px 14px;border:1px solid #455638;border-radius:12px;background:#20291c}
+.rick-ai-briefing-focus strong{display:block;color:#e8f8d8;font-size:14px;line-height:1.45}
+.rick-ai-briefing-focus p,.rick-ai-briefing-signal,.rick-ai-briefing-change,.rick-ai-briefing-conclusion{margin:5px 0 0;color:#c5d0c0;font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+.rick-ai-briefing-focus span{display:inline-block;margin-top:8px;color:var(--rai-accent);font-size:9px;letter-spacing:.08em;text-transform:uppercase}
+.rick-ai-briefing-signal,.rick-ai-briefing-change{margin:0;padding:9px 11px;border-left:2px solid #5b7440;background:#181f17;border-radius:0 8px 8px 0}
+.rick-ai-briefing-change{border-left-color:#3f5b32}
+.rick-ai-briefing-conclusion{margin:0;padding:12px 13px;border-radius:10px;background:#121712;border:1px solid #303a2d;color:#d9e4d4}
+.rick-ai-briefing-empty{margin:0;color:var(--rai-muted);font-size:12px;line-height:1.6}
