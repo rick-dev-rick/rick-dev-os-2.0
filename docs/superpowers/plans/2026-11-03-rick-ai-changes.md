@@ -39,10 +39,10 @@
 - Produces: `buildRickAiChangeSnapshot(snapshot, moduleId)`
 - Produces: `diffRickAiChanges(previous, current, moduleId)`
 
-- [ ] Escrever testes RED para os 6 módulos, primeira referência e limite de 4 mudanças.
-- [ ] Rodar testes e confirmar falha pela ausência das funções.
-- [ ] Implementar compactação e diffs mínimos.
-- [ ] Rodar testes e confirmar GREEN.
+- [x] Escrever testes RED para os 6 módulos, primeira referência e limite de 4 mudanças.
+- [x] Rodar testes e confirmar falha pela ausência das funções.
+- [x] Implementar compactação e diffs mínimos.
+- [x] Rodar testes e confirmar GREEN.
 
 ### Task 2: Persistência local por módulo
 
@@ -54,10 +54,10 @@
 - Produces: `loadRickAiChangeBaseline(moduleId, storage)`
 - Produces: `saveRickAiChangeBaseline(moduleId, snapshot, storage)`
 
-- [ ] Escrever testes para baseline por módulo, JSON inválido e storage indisponível.
-- [ ] Confirmar RED.
-- [ ] Implementar helpers resilientes de localStorage.
-- [ ] Confirmar GREEN.
+- [x] Escrever testes para baseline por módulo, JSON inválido e storage indisponível.
+- [x] Confirmar RED.
+- [x] Implementar helpers resilientes de localStorage.
+- [x] Confirmar GREEN.
 
 ### Task 3: Integração no painel
 
@@ -66,11 +66,11 @@
 - Modify: `src/rick-ai/rick-ai.css`
 - Modify: `tests/rick-ai-ui.test.mjs`
 
-- [ ] Escrever testes de UI para botão `Mudanças`, badge, cartão e revisão sem API.
-- [ ] Confirmar RED.
-- [ ] Integrar baseline/diff ao snapshot vivo.
-- [ ] Ao abrir mudanças, capturar diff e salvar nova referência.
-- [ ] Fechar cartão ao trocar módulo.
+- [x] Escrever testes de UI para botão `Mudanças`, badge, cartão e revisão sem API.
+- [x] Confirmar RED.
+- [x] Integrar baseline/diff ao snapshot vivo.
+- [x] Ao abrir mudanças, capturar diff e salvar nova referência.
+- [x] Fechar cartão ao trocar módulo.
 - [ ] Confirmar testes e build.
 
 ### Task 4: Publicação
