@@ -33,6 +33,18 @@ export function parseRickAiConversations(rows) {
     : [];
 }
 
+export function parseRickAiMemories(rows) {
+  const allowed = new Set(['preference', 'goal', 'decision', 'priority', 'routine', 'project']);
+  return Array.isArray(rows)
+    ? rows.filter((row) => row && typeof row.id === 'string' && row.id.trim() && allowed.has(row.category) && typeof row.content === 'string' && row.content.trim()).map((row) => ({
+      id: row.id.trim(),
+      category: row.category,
+      content: row.content.trim(),
+      createdAt: typeof row.created_at === 'string' ? row.created_at : null,
+    }))
+    : [];
+}
+
 async function currentUser() {
   const { data: { user }, error } = await client.auth.getUser();
   if (error || !user) throw Error('Sessão inválida para a memória da Rick IA.');
@@ -50,6 +62,44 @@ export async function listRickAiConversations(limit = 8) {
     .limit(safeLimit);
   if (error) throw Error('Não foi possível listar as conversas da Rick IA.');
   return parseRickAiConversations(data);
+}
+
+export async function listRickAiMemories(limit = 20) {
+  const user = await currentUser();
+  const safeLimit = Math.min(Math.max(Number(limit) || 20, 1), 20);
+  const { data, error } = await client
+    .from('rick_ai_memories')
+    .select('id,category,content,created_at')
+    .eq('owner_id', user.id)
+    .order('updated_at', { ascending: false })
+    .limit(safeLimit);
+  if (error) throw Error('Não foi possível carregar as memórias da Rick IA.');
+  return parseRickAiMemories(data);
+}
+
+export async function saveRickAiMemory(candidate) {
+  const user = await currentUser();
+  const category = String(candidate?.category || '').trim();
+  const content = String(candidate?.content || '').trim();
+  const normalizedKey = String(candidate?.normalizedKey || '').trim();
+  const allowed = new Set(['preference', 'goal', 'decision', 'priority', 'routine', 'project']);
+  if (!allowed.has(category) || !content || content.length > 500 || !normalizedKey) throw Error('Memória inválida para salvar.');
+  const { data, error } = await client
+    .from('rick_ai_memories')
+    .upsert({ owner_id: user.id, category, content, normalized_key: normalizedKey, updated_at: new Date().toISOString() }, { onConflict: 'owner_id,normalized_key' })
+    .select('id,category,content,created_at')
+    .single();
+  if (error || !data) throw Error('Não foi possível salvar essa memória da Rick IA.');
+  return parseRickAiMemories([data])[0] || null;
+}
+
+export async function deleteRickAiMemory(id) {
+  const user = await currentUser();
+  const cleanId = typeof id === 'string' ? id.trim() : '';
+  if (!cleanId) throw Error('Memória inválida para excluir.');
+  const { error } = await client.from('rick_ai_memories').delete().eq('owner_id', user.id).eq('id', cleanId);
+  if (error) throw Error('Não foi possível excluir essa memória da Rick IA.');
+  return true;
 }
 
 export async function loadRickAiHistory(conversationId = null) {
