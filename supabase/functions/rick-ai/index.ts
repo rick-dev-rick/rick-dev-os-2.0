@@ -180,7 +180,7 @@ Deno.serve(async (req: Request) => {
       `MENSAGEM DO USUÁRIO: ${message}`,
     ].join('\n\n');
 
-    let aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+    const providerRequest = new Request(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
       method: 'POST',
       headers: { 'x-goog-api-key': geminiKey, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -189,6 +189,12 @@ Deno.serve(async (req: Request) => {
         generationConfig: { responseMimeType: 'application/json', responseSchema: toGeminiSchema(responseSchema), maxOutputTokens: 4096, thinkingConfig: { thinkingLevel: 'LOW' } },
       }),
     });
+    let aiResponse = await fetch(providerRequest.clone());
+    for (let attempt = 0; attempt < 2 && [500, 502, 503, 504].includes(aiResponse.status); attempt++) {
+      await aiResponse.text();
+      await new Promise((resolve) => setTimeout(resolve, 800 * (attempt + 1)));
+      aiResponse = await fetch(providerRequest.clone());
+    }
     if (!aiResponse.ok) {
       const detail = await aiResponse.text();
       console.error('Gemini error', aiResponse.status, detail.slice(0, 1000));
