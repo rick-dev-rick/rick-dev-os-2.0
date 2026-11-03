@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { initialData } from '../src/models.mjs';
+import { initialData, today } from '../src/models.mjs';
 import { applyConfirmedAction, validatePendingAction } from '../src/rick-ai/contracts.mjs';
 import { buildRickAiLocalAction, getRickAiModuleActions } from '../src/rick-ai/module-actions.mjs';
 
@@ -13,14 +13,15 @@ test('contrato valida treino simples antes de confirmar', () => {
 });
 
 test('contrato registra cuidado do System sem duplicar o mesmo dia', () => {
+  const currentDay = today();
   const base = {
     ...initialData,
-    systemProgress: { backupDays: ['2026-11-03'], diagnosticDays: [] },
+    systemProgress: { backupDays: [currentDay], diagnosticDays: [] },
   };
   const action = validatePendingAction({ type: 'mark_system_care', payload: { kind: 'backupDays' } });
   assert.equal(action.payload.kind, 'backupDays');
   const next = applyConfirmedAction(base, action);
-  assert.deepEqual(next.systemProgress.backupDays, ['2026-11-03']);
+  assert.deepEqual(next.systemProgress.backupDays, [currentDay]);
 });
 
 test('contrato rejeita cuidado desconhecido do System', () => {
