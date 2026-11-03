@@ -151,3 +151,9 @@
 .rick-ai-copy-reply{margin-top:10px!important;padding:5px 9px!important;display:inline-flex!important;align-items:center;gap:5px;border:1px solid #40503c!important;border-radius:8px!important;background:transparent!important;color:#b6c5b1!important;font-size:11px!important;cursor:pointer}
 .rick-ai-copy-reply:hover{border-color:#a5e96b!important;color:#d0ffa4!important}
 .rick-ai-copy-reply:focus-visible{outline:2px solid #b7f475;outline-offset:2px}
+
+/* Gemini neural voice: controls stay hidden until a spoken reply is ready. */
+.rick-ai-audio{padding:9px 20px 4px;background:#141815;display:flex;flex-direction:column;gap:5px;border-top:1px solid #303a30}
+.rick-ai-audio span{font-size:10px;letter-spacing:.12em;font-weight:700;color:#b0d58c}
+.rick-ai-audio audio{width:100%;max-height:42px;accent-color:#b2f377}
+@media(max-width:640px){.rick-ai-audio{padding:8px 12px 0}}
