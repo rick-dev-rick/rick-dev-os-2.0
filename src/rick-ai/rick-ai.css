@@ -147,3 +147,7 @@
 .rick-ai-composer .rick-ai-voice-btn[aria-pressed=true]{background:#344c2b;color:#c9ff90;border-color:#aaf16e}
 .rick-ai-composer .rick-ai-voice-btn:focus-visible{outline:2px solid #b7f475;outline-offset:2px}
 @media(max-width:640px){.rick-ai-composer{grid-template-columns:36px 36px minmax(0,1fr) 44px;gap:6px}.rick-ai-composer .rick-ai-voice-btn{width:36px;min-height:44px}}
+
+.rick-ai-copy-reply{margin-top:10px!important;padding:5px 9px!important;display:inline-flex!important;align-items:center;gap:5px;border:1px solid #40503c!important;border-radius:8px!important;background:transparent!important;color:#b6c5b1!important;font-size:11px!important;cursor:pointer}
+.rick-ai-copy-reply:hover{border-color:#a5e96b!important;color:#d0ffa4!important}
+.rick-ai-copy-reply:focus-visible{outline:2px solid #b7f475;outline-offset:2px}
