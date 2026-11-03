@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
+// Regressão: mobile.css precisa vencer os estilos gerais no bundle final.
 const entry = await readFile(new URL('../src/entry.jsx', import.meta.url), 'utf8');
 const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 
