@@ -3,6 +3,7 @@ import { Bot, Check, History, LoaderCircle, MessageCircle, Plus, Send, X } from 
 import { applyConfirmedAction, buildRickAiSnapshot } from './contracts.mjs';
 import { listRickAiConversations, loadRickAiHistory, saveRickAiExchange, sendRickAiMessage } from './client.mjs';
 import { buildRickAiInsights } from './insights.mjs';
+import { buildRickAiLocalAction, getRickAiModuleActions } from './module-actions.mjs';
 import { getRickAiModule, getRickAiSuggestions } from './modules.mjs';
 import './rick-ai.css';
 
@@ -24,11 +25,13 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
+  const [quickActionForm, setQuickActionForm] = useState(null);
   const [dismissedInsightSignature, setDismissedInsightSignature] = useState('');
   const messagesEndRef = useRef(null);
   const snapshot = useMemo(() => buildRickAiSnapshot(data, page), [data, page]);
   const activeModule = useMemo(() => getRickAiModule(page), [page]);
   const moduleSuggestions = useMemo(() => getRickAiSuggestions(page), [page]);
+  const moduleActions = useMemo(() => getRickAiModuleActions(page), [page]);
   const insights = useMemo(() => role === 'admin' ? buildRickAiInsights(snapshot) : [], [snapshot, role]);
   const currentInsightSignature = useMemo(() => insights.map((item) => item.id).join('|'), [insights]);
   const insightsVisible = insights.length > 0 && currentInsightSignature !== dismissedInsightSignature;
@@ -69,16 +72,22 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
     messagesEndRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'end' });
   }, [messages, loading, pendingAction]);
 
+  useEffect(() => {
+    setQuickActionForm(null);
+  }, [page]);
+
   function startNewConversation() {
     if (loading) return;
     setConversationId(null);
     setMessages([greeting]);
     setPendingAction(null);
+    setQuickActionForm(null);
     setDraft('');
     setConversationListOpen(false);
   }
 
   async function switchConversation(id) {
+    setQuickActionForm(null);
     if (!id || loading || id === conversationId) { setConversationListOpen(false); return; }
     setLoading(true);
     setPendingAction(null);
@@ -115,6 +124,35 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
   }
 
   async function submit(event) { event?.preventDefault(); await sendMessage(draft); }
+
+  function openQuickAction(actionDefinition) {
+    if (role !== 'admin' || pendingAction) return;
+    if (!actionDefinition.fields?.length) {
+      try {
+        const action = buildRickAiLocalAction(actionDefinition.id, {}, activeModule.id);
+        setPendingAction(action);
+        setQuickActionForm(null);
+      } catch (error) {
+        notify?.(error.message || 'Não consegui preparar essa ação.');
+      }
+      return;
+    }
+    setQuickActionForm(actionDefinition);
+  }
+
+  function submitQuickAction(event) {
+    event.preventDefault();
+    if (!quickActionForm || role !== 'admin') return;
+    try {
+      const formData = new FormData(event.currentTarget);
+      const fields = Object.fromEntries(formData.entries());
+      const action = buildRickAiLocalAction(quickActionForm.id, fields, activeModule.id);
+      setPendingAction(action);
+      setQuickActionForm(null);
+    } catch (error) {
+      notify?.(error.message || 'Confira os dados dessa ação.');
+    }
+  }
 
   function confirmAction() {
     if (!pendingAction || role !== 'admin') return;
@@ -163,6 +201,18 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
         {loading && <div className="rick-ai-message assistant loading"><LoaderCircle size={15} className="rick-ai-spin"/> pensando</div>}
         <div ref={messagesEndRef}/>
       </div>
+
+      {role === 'admin' && !pendingAction && <div className="rick-ai-quick-actions">
+        <strong>AÇÕES RÁPIDAS</strong>
+        <div>{moduleActions.map((actionDefinition) => <button type="button" key={actionDefinition.id} onClick={() => openQuickAction(actionDefinition)}>{actionDefinition.label}</button>)}</div>
+      </div>}
+
+      {quickActionForm && !pendingAction && <form className="rick-ai-quick-form" onSubmit={submitQuickAction}>
+        <div><strong>{quickActionForm.label}</strong><button type="button" aria-label="Cancelar ação rápida" onClick={() => setQuickActionForm(null)}><X size={14}/></button></div>
+        {quickActionForm.fields.includes('title') && <input name="title" placeholder={quickActionForm.id === 'add_project' ? 'Nome do projeto' : quickActionForm.id === 'add_workout' ? 'Nome do treino' : 'Título'} maxLength={140} required/>}
+        {quickActionForm.fields.includes('amount') && <input name="amount" inputMode="decimal" placeholder="Valor (ex.: 32,50)" required/>}
+        <button type="submit"><Check size={14}/> Preparar confirmação</button>
+      </form>}
 
       {pendingAction && <div className="rick-ai-action-card"><small>A RICK IA QUER ALTERAR O OS</small><strong>{pendingAction.preview}</strong><p>Nada foi alterado ainda.</p><div><button type="button" className="rick-ai-cancel" onClick={() => setPendingAction(null)}>Cancelar</button><button type="button" className="rick-ai-confirm" onClick={confirmAction}><Check size={15}/> Confirmar</button></div></div>}
 
