@@ -120,3 +120,18 @@ test('trocar módulo ou conversa fecha formulário rápido pendente', () => {
   assert.match(panel, /startNewConversation[\s\S]*setQuickActionForm\(null\)/);
   assert.match(panel, /switchConversation[\s\S]*setQuickActionForm\(null\)/);
 });
+
+test('painel oferece resumo local do módulo sem chamar a API', () => {
+  assert.match(panel, /buildRickAiModuleSummary/);
+  assert.match(panel, /const \[summaryOpen, setSummaryOpen\] = useState\(false\)/);
+  assert.match(panel, /const moduleSummary = useMemo/);
+  assert.match(panel, /RESUMO DO MÓDULO/);
+  assert.match(panel, />Resumo</);
+  assert.match(styles, /\.rick-ai-summary-card\{/);
+  assert.match(styles, /\.rick-ai-summary-row\{/);
+  assert.doesNotMatch(panel, /function openSummary[\s\S]{0,300}sendRickAiMessage/);
+});
+
+test('trocar de módulo fecha o resumo local aberto', () => {
+  assert.match(panel, /useEffect\(\(\) => \{[\s\S]*setSummaryOpen\(false\)[\s\S]*\}, \[page\]\)/);
+});
