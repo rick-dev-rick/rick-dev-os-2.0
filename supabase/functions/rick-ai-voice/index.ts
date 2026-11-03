@@ -97,19 +97,12 @@ async function speak(body: any, apiKey: string) {
   if (!text || text.length > 1000) return json({ error: 'Fala inválida ou muito longa (máximo 1000 caracteres).' }, 400);
   const model = Deno.env.get('GEMINI_TTS_MODEL') || 'gemini-3.8-flash-lite-tts';
   const voice = Deno.env.get('RICK_AI_TTS_VOICE') || 'Gacrux';
-  const prompt = [
-    'Leia EXATAMENTE o texto seguinte em português brasileiro, sem acrescentar palavras.',
-    'Interpretação: mulher adulta, timbre médio-grave, tom calmo, inteligente, seguro,',
-    'ligeiramente seco, ironia sutil apenas onde couber; dicção limpa, sem soar robótica,',
-    'sem exageros dramáticos e sem imitar a voz de pessoa ou personagem específico.',
-    'Texto:',
-    text,
-  ].join('\n');
+  // Send only the spoken transcript. Instructions in this field can be spoken verbatim.
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
     method: 'POST',
     headers: { 'x-goog-api-key': apiKey, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      contents: [{ role: 'user', parts: [{ text }] }],
       generationConfig: {
         responseModalities: ['AUDIO'],
         speechConfig: {
