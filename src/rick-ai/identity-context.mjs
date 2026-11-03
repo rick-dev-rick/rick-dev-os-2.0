@@ -6,7 +6,7 @@ const DEV_SIGNALS = [
   ['portfólio', 3], ['portfolio', 3], ['freela', 3], ['freelancer', 3], ['cliente', 2],
   ['código', 2], ['codigo', 2], ['programação', 2], ['programacao', 2], ['projeto', 2],
   ['site', 2], ['deploy', 2], ['repo', 2], ['repositório', 2], ['ads', 2], ['ti', 2],
-  ['rick dev', 4], ['rick', 2],
+  ['rick dev', 4],
 ];
 
 const PERSONAL_SIGNALS = [
