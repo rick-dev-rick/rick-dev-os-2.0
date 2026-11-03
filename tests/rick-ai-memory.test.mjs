@@ -21,6 +21,7 @@ test('ignora conversa casual e estado transitório', () => {
   assert.equal(extractRickAiMemoryCandidate('Tô cansado hoje.'), null);
   assert.equal(extractRickAiMemoryCandidate('Agora eu vou tomar banho.'), null);
   assert.equal(extractRickAiMemoryCandidate('kkkk isso ficou top'), null);
+  assert.equal(extractRickAiMemoryCandidate('Isso vai ser top demais.'), null);
 });
 
 test('não memoriza automaticamente conteúdo sensível ou segredo', () => {
