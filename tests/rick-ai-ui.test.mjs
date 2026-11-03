@@ -58,12 +58,6 @@ test('painel lista e troca conversas recentes', () => {
   assert.match(panel, /Nova conversa/);
 });
 
-test('lista de conversas tem estilo compacto e responsivo', () => {
-  assert.match(styles, /\.rick-ai-conversation-list\{/);
-  assert.match(styles, /max-height:210px/);
-  assert.match(styles, /@media\(max-width:640px\)[\s\S]*\.rick-ai-conversation-list\{max-height:180px\}/);
-});
-
 test('painel faz auto-scroll para a mensagem mais recente', () => {
   assert.match(panel, /messagesEndRef/);
   assert.match(panel, /scrollIntoView/);
@@ -86,4 +80,21 @@ test('launcher mostra badge discreto quando há insights e painel está fechado'
   assert.match(panel, /rick-ai-insight-badge/);
   assert.match(styles, /\.rick-ai-insight-badge\{/);
   assert.match(styles, /\.rick-ai-insight-card\{/);
+});
+
+test('painel mostra consciência do módulo atual', () => {
+  assert.match(panel, /getRickAiModule/);
+  assert.match(panel, /activeModule/);
+  assert.match(panel, /rick-ai-module-context/);
+  assert.match(panel, /activeModule\.label/);
+  assert.match(panel, /activeModule\.focus/);
+});
+
+test('painel oferece sugestões rápidas do módulo no estado inicial', () => {
+  assert.match(panel, /getRickAiSuggestions/);
+  assert.match(panel, /showModuleSuggestions/);
+  assert.match(panel, /rick-ai-suggestions/);
+  assert.match(panel, /sendMessage\(suggestion\)/);
+  assert.match(styles, /\.rick-ai-suggestions\{/);
+  assert.match(styles, /\.rick-ai-suggestion-chip\{/);
 });

@@ -1,8 +1,10 @@
 import { balance } from '../data.mjs';
+import { getRickAiModule } from './modules.mjs';
 
 const take = (rows, count = 20) => Array.isArray(rows) ? rows.slice(-count) : [];
 
 export function buildRickAiSnapshot(data, page = 'home') {
+  const activeModule = getRickAiModule(page);
   const tasks = take(data.tasks).map(({ id, title, description, tag, module, progress, done }) => ({
     id, title, description, tag, module, progress, done,
   }));
@@ -14,7 +16,13 @@ export function buildRickAiSnapshot(data, page = 'home') {
   }));
 
   return {
-    page,
+    page: activeModule.id,
+    activeModule: {
+      id: activeModule.id,
+      label: activeModule.label,
+      focus: activeModule.focus,
+      priorities: activeModule.priorities,
+    },
     profile: {
       name: data.name || 'Rick',
       focusCount: Number(data.focusCount || 0),

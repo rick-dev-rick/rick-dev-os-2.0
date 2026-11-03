@@ -10,6 +10,7 @@ on:
       - feature/rick-ai-memory-context
       - feature/rick-ai-conversations
       - feature/rick-ai-proactivity
+      - feature/rick-ai-module-awareness
   workflow_dispatch:
 
 permissions:
