@@ -5,6 +5,7 @@ import { readFile } from 'node:fs/promises';
 const main = await readFile(new URL('../src/main.jsx', import.meta.url), 'utf8');
 const panel = await readFile(new URL('../src/rick-ai/RickAiPanel.jsx', import.meta.url), 'utf8');
 const styles = await readFile(new URL('../src/rick-ai/rick-ai.css', import.meta.url), 'utf8');
+const briefingStyles = await readFile(new URL('../src/rick-ai/briefing.css', import.meta.url), 'utf8');
 
 test('App importa e renderiza RickAiPanel com o estado vivo do OS', () => {
   assert.match(main, /import RickAiPanel from ["']\.\/rick-ai\/RickAiPanel\.jsx["']/);
@@ -194,7 +195,7 @@ test('painel oferece briefing manual local sem chamar a API', () => {
   assert.match(panel, /BRIEFING DA RICK IA/);
   assert.match(panel, />Briefing</);
   assert.match(panel, /rick-ai-briefing-card/);
-  assert.match(styles, /\.rick-ai-briefing-card\{/);
+  assert.match(briefingStyles, /\.rick-ai-briefing-card\{/);
   assert.doesNotMatch(panel, /function[^\n]*Briefing[\s\S]{0,500}sendRickAiMessage/);
 });
 
