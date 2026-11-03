@@ -211,3 +211,17 @@ test('briefing mostra foco, sinais e mudanças quando existirem', () => {
 test('trocar de módulo fecha o briefing', () => {
   assert.match(panel, /useEffect\(\(\) => \{[\s\S]*setBriefingOpen\(false\)[\s\S]*\}, \[page\]\)/);
 });
+
+test('identidade pública da assistente é Daiane', () => {
+  assert.match(panel, /<strong>DAIANE<\/strong>/);
+  assert.match(panel, /aria-label="Daiane"/);
+  assert.match(panel, /Conversa com Daiane/);
+  assert.match(panel, /DAIANE \/ \{activeModule\.label\}/);
+});
+
+test('painel envia contexto de identidade Douglas ou Rick ao backend', () => {
+  assert.match(panel, /inferRickIdentityContext/);
+  assert.match(panel, /rickAiIdentityContext/);
+  assert.match(panel, /recentConversation/);
+  assert.match(panel, /activeModule\.id/);
+});
