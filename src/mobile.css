@@ -1,0 +1,145 @@
+/* Overrides cirúrgicos para telas pequenas. Carregado depois do CSS principal. */
+@media (max-width: 620px) {
+  html,
+  body,
+  #root,
+  .app,
+  main {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .app main > header {
+    min-height: calc(62px + env(safe-area-inset-top));
+    height: auto;
+    padding-top: env(safe-area-inset-top);
+    padding-left: max(14px, env(safe-area-inset-left));
+    padding-right: max(14px, env(safe-area-inset-right));
+  }
+
+  .content {
+    width: 100%;
+    max-width: 100%;
+    padding-left: max(14px, env(safe-area-inset-left));
+    padding-right: max(14px, env(safe-area-inset-right));
+    padding-bottom: calc(170px + env(safe-area-inset-bottom));
+  }
+
+  .panel,
+  .module-card,
+  .metric-card,
+  .next-card,
+  .hero,
+  .bottom-strip {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .dashboard-grid,
+  .next-grid,
+  .home-projects,
+  .evolution-board {
+    grid-template-columns: 1fr;
+  }
+
+  .next-grid {
+    display: grid;
+    gap: 12px;
+  }
+
+  .overview-metrics {
+    min-width: 0;
+  }
+
+  .metric-card {
+    width: 100%;
+    min-height: 78px;
+  }
+
+  .home-projects,
+  .evolution-board {
+    width: 100%;
+  }
+
+  .panel-head {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .panel-head .text-button {
+    max-width: 100%;
+    white-space: normal;
+    text-align: right;
+  }
+
+  .music-dock,
+  .music-dock.expanded {
+    width: calc(100% - 24px);
+    max-width: none;
+    left: 12px;
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+
+  .rick-ai-root {
+    left: max(12px, env(safe-area-inset-left));
+    right: auto;
+    bottom: calc(96px + env(safe-area-inset-bottom));
+  }
+
+  .rick-ai-launcher {
+    width: 54px;
+    min-width: 54px;
+    height: 54px;
+    padding: 0;
+    border-radius: 18px;
+  }
+
+  .rick-ai-launcher-label {
+    display: none;
+  }
+
+  .rick-ai-panel {
+    max-width: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .overview-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .metric-card {
+    padding: 14px 16px;
+  }
+
+  .mini-ring {
+    width: 48px;
+    height: 48px;
+  }
+
+  .hero-copy {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .hero h2 {
+    font-size: clamp(30px, 9vw, 35px);
+  }
+
+  .breadcrumbs span,
+  .breadcrumbs > svg:last-of-type {
+    display: none;
+  }
+
+  .header-right {
+    min-width: 0;
+  }
+
+  .account-button {
+    max-width: 90px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

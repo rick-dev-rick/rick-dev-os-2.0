@@ -19,6 +19,7 @@ on:
       - feature/rick-ai-briefing
       - feature/rick-ai-conversational-actions
       - feature/daiane-dual-identity
+      - fix/mobile-layout
   workflow_dispatch:
 
 permissions:
