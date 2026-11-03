@@ -98,3 +98,25 @@ test('painel oferece sugestões rápidas do módulo no estado inicial', () => {
   assert.match(styles, /\.rick-ai-suggestions\{/);
   assert.match(styles, /\.rick-ai-suggestion-chip\{/);
 });
+
+test('painel oferece ações rápidas contextuais apenas no ADM', () => {
+  assert.match(panel, /getRickAiModuleActions/);
+  assert.match(panel, /AÇÕES RÁPIDAS/);
+  assert.match(panel, /role === ['"]admin['"]/);
+  assert.match(panel, /rick-ai-quick-actions/);
+  assert.match(styles, /\.rick-ai-quick-actions\{/);
+});
+
+test('ação rápida cria pendingAction local e ainda exige confirmação', () => {
+  assert.match(panel, /buildRickAiLocalAction/);
+  assert.match(panel, /setPendingAction\(action\)/);
+  assert.match(panel, /quickActionForm/);
+  assert.match(panel, /submitQuickAction/);
+  assert.match(styles, /\.rick-ai-quick-form\{/);
+});
+
+test('trocar módulo ou conversa fecha formulário rápido pendente', () => {
+  assert.match(panel, /useEffect\(\(\) => \{[\s\S]*setQuickActionForm\(null\)[\s\S]*\}, \[page\]\)/);
+  assert.match(panel, /startNewConversation[\s\S]*setQuickActionForm\(null\)/);
+  assert.match(panel, /switchConversation[\s\S]*setQuickActionForm\(null\)/);
+});
