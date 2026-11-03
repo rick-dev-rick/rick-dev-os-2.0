@@ -21,6 +21,7 @@ on:
       - fix/mobile-layout
       - fix/rick-ai-public-name
       - fix/mobile-player-cta
+      - fix/mobile-css-order
   workflow_dispatch:
 
 permissions:
