@@ -140,3 +140,10 @@
 }
 @media(max-width:360px){.rick-ai-header{padding:12px;gap:8px}.rick-ai-identity{gap:8px}.rick-ai-orb{display:none}.rick-ai-header strong{font-size:18px}.rick-ai-header-actions{gap:4px}.rick-ai-icon{width:32px}.rick-ai-body{padding-inline:12px}.rick-ai-module-context{padding-inline:12px}.rick-ai-composer{padding-inline:12px}}
 @media(prefers-reduced-motion:reduce){.rick-ai-root button{transition:none}.rick-ai-spin{animation:none}.rick-ai-body{scroll-behavior:auto}}
+
+/* Voice controls: accessible, compact and consistent with the OS. */
+.rick-ai-composer{grid-template-columns:44px 44px minmax(0,1fr) 48px}
+.rick-ai-composer .rick-ai-voice-btn{width:44px;min-height:44px;background:#202920;border:1px solid #526849;color:#b7f475}
+.rick-ai-composer .rick-ai-voice-btn[aria-pressed=true]{background:#344c2b;color:#c9ff90;border-color:#aaf16e}
+.rick-ai-composer .rick-ai-voice-btn:focus-visible{outline:2px solid #b7f475;outline-offset:2px}
+@media(max-width:640px){.rick-ai-composer{grid-template-columns:36px 36px minmax(0,1fr) 44px;gap:6px}.rick-ai-composer .rick-ai-voice-btn{width:36px;min-height:44px}}
