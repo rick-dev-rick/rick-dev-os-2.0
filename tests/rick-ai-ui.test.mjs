@@ -28,7 +28,8 @@ test('painel oferece voz opcional sem exigir gravação contínua', () => {
   assert.match(panel, /SpeechRecognition/);
   assert.match(panel, /aria-label=\{listening \? "Parar ditado" : "Ditar mensagem"\}/);
   assert.match(panel, /readAloud/);
-  assert.match(panel, /speechSynthesis/);
+  assert.match(panel, /speakRickAiText/);
+  assert.match(panel, /audioUrl/);
   assert.match(panel, /role !== "admin"/);
   assert.doesNotMatch(panel, /MediaRecorder/);
   assert.doesNotMatch(panel, /navigator\.mediaDevices\.getUserMedia/);
