@@ -88,7 +88,9 @@ export default function HomeExtras({ data, setData, notify, go }) {
             {data.topics.find((t) => !t.done)?.title ||
               "Sua trilha está em dia"}
           </strong>
-          <span>Abrir estudos ↗</span>
+          <span className="next-card-action">
+            Abrir estudos <ArrowUpRight size={14} />
+          </span>
         </button>
         <button className="next-card" onClick={() => go("study")}>
           <small>
@@ -98,7 +100,9 @@ export default function HomeExtras({ data, setData, notify, go }) {
             {data.tasks.find((t) => !t.done)?.title ||
               "Espaço para um novo desafio"}
           </strong>
-          <span>Ver missões ↗</span>
+          <span className="next-card-action">
+            Ver missões <ArrowUpRight size={14} />
+          </span>
         </button>
         <button className="next-card" onClick={() => go("fit")}>
           <small>
@@ -112,7 +116,9 @@ export default function HomeExtras({ data, setData, notify, go }) {
             ) / 100}{" "}
             km registrados
           </strong>
-          <span>Ver sua evolução ↗</span>
+          <span className="next-card-action">
+            Ver sua evolução <ArrowUpRight size={14} />
+          </span>
         </button>
       </div>
       <section className="panel">

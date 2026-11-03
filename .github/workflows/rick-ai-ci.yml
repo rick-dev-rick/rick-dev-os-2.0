@@ -20,6 +20,7 @@ on:
       - feature/rick-ai-conversational-actions
       - fix/mobile-layout
       - fix/rick-ai-public-name
+      - fix/mobile-player-cta
   workflow_dispatch:
 
 permissions:
