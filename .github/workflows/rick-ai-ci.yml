@@ -12,6 +12,7 @@ on:
       - feature/rick-ai-proactivity
       - feature/rick-ai-module-awareness
       - feature/rick-ai-module-actions
+      - feature/rick-ai-module-summary
   workflow_dispatch:
 
 permissions:
