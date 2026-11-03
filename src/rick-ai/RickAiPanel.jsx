@@ -185,7 +185,8 @@ export default function RickAiPanel({ data, page, role, setData, notify }) {
         const speech = new SpeechSynthesisUtterance(reply.message);
         speech.lang = 'pt-BR';
         speech.rate = 1.02;
-        speech.voice = window.speechSynthesis.getVoices().find((voice) => voice.lang.toLowerCase() === 'pt-br') || null;
+        const voices = window.speechSynthesis.getVoices().filter((voice) => voice.lang.toLowerCase() === 'pt-br');
+        speech.voice = voices.find((voice) => /luciana|francisca|maria|female/i.test(voice.name)) || voices[0] || null;
         window.speechSynthesis.speak(speech);
       }
       voiceReplyRef.current = false;
