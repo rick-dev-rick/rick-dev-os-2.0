@@ -11,6 +11,7 @@ on:
       - feature/rick-ai-conversations
       - feature/rick-ai-proactivity
       - feature/rick-ai-module-awareness
+      - feature/rick-ai-module-actions
   workflow_dispatch:
 
 permissions:

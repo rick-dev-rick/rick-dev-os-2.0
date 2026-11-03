@@ -1,8 +1,9 @@
 import { addTransaction, createId } from '../data.mjs';
-import { normalizeData, validateRecord } from '../models.mjs';
+import { awardCare } from '../dashboard.mjs';
+import { normalizeData, today, validateRecord } from '../models.mjs';
 export { buildRickAiSnapshot } from './context.mjs';
 
-const SUPPORTED = new Set(['add_task', 'add_project', 'add_transaction']);
+const SUPPORTED = new Set(['add_task', 'add_project', 'add_transaction', 'add_workout', 'mark_system_care']);
 
 function object(value) {
   return value && typeof value === 'object' && !Array.isArray(value) ? value : null;
@@ -47,6 +48,26 @@ export function validatePendingAction(raw) {
     };
   }
 
+  if (raw.type === 'add_workout') {
+    const title = String(payload.title || '').trim();
+    if (!title || title.length > 140) throw Error('Treino sugerido pela Rick IA é inválido.');
+    return {
+      type: raw.type,
+      payload: { id: createId(), title, done: false },
+      preview: `Adicionar treino: ${title}`,
+    };
+  }
+
+  if (raw.type === 'mark_system_care') {
+    const kind = payload.kind;
+    if (!['backupDays', 'diagnosticDays'].includes(kind)) throw Error('Cuidado do System inválido.');
+    return {
+      type: raw.type,
+      payload: { kind },
+      preview: kind === 'backupDays' ? 'Registrar backup de hoje' : 'Registrar diagnóstico de hoje',
+    };
+  }
+
   const title = String(payload.title || '').trim();
   const amount = Number(payload.amount);
   const type = payload.type;
@@ -68,6 +89,13 @@ export function applyConfirmedAction(data, rawAction) {
     next = { ...data, tasks: [...data.tasks, action.payload] };
   } else if (action.type === 'add_project') {
     next = { ...data, projects: [...data.projects, action.payload] };
+  } else if (action.type === 'add_workout') {
+    next = { ...data, workouts: [...data.workouts, action.payload] };
+  } else if (action.type === 'mark_system_care') {
+    next = {
+      ...data,
+      systemProgress: awardCare(data.systemProgress, action.payload.kind, today()),
+    };
   } else {
     next = {
       ...data,
