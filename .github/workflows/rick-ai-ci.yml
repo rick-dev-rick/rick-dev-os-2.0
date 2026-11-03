@@ -18,8 +18,8 @@ on:
       - feature/rick-ai-priority
       - feature/rick-ai-briefing
       - feature/rick-ai-conversational-actions
-      - feature/daiane-dual-identity
       - fix/mobile-layout
+      - fix/rick-ai-public-name
   workflow_dispatch:
 
 permissions:
