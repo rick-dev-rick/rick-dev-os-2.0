@@ -70,8 +70,8 @@ test('painel calcula insights locais sem chamar a API automaticamente', () => {
   assert.doesNotMatch(panel, /useEffect\([\s\S]{0,500}sendRickAiMessage/);
 });
 
-test('painel mostra cartão DAIANE NOTOU e permite dispensar o conjunto atual', () => {
-  assert.match(panel, /DAIANE NOTOU/);
+test('painel mostra cartão RICK AI NOTOU e permite dispensar o conjunto atual', () => {
+  assert.match(panel, /RICK AI NOTOU/);
   assert.match(panel, /Dispensar/);
   assert.match(panel, /dismissedInsightSignature/);
   assert.match(panel, /currentInsightSignature/);
@@ -192,7 +192,7 @@ test('painel oferece briefing manual local sem chamar a API', () => {
   assert.match(panel, /buildRickAiBriefing/);
   assert.match(panel, /const \[briefingOpen, setBriefingOpen\] = useState\(false\)/);
   assert.match(panel, /const briefing = useMemo/);
-  assert.match(panel, /BRIEFING DA DAIANE/);
+  assert.match(panel, /BRIEFING DA RICK AI/);
   assert.match(panel, />Briefing</);
   assert.match(panel, /rick-ai-briefing-card/);
   assert.match(briefingStyles, /\.rick-ai-briefing-card\{/);
@@ -212,11 +212,11 @@ test('trocar de módulo fecha o briefing', () => {
   assert.match(panel, /useEffect\(\(\) => \{[\s\S]*setBriefingOpen\(false\)[\s\S]*\}, \[page\]\)/);
 });
 
-test('identidade pública da assistente é Daiane', () => {
-  assert.match(panel, /<strong>DAIANE<\/strong>/);
-  assert.match(panel, /aria-label="Daiane"/);
-  assert.match(panel, /Conversa com Daiane/);
-  assert.match(panel, /DAIANE \/ \{activeModule\.label\}/);
+test('identidade pública da assistente é RICK AI', () => {
+  assert.match(panel, /<strong>RICK AI<\/strong>/);
+  assert.match(panel, /aria-label="RICK AI"/);
+  assert.match(panel, /Conversa com RICK AI/);
+  assert.match(panel, /RICK AI \/ \{activeModule\.label\}/);
 });
 
 test('painel envia contexto de identidade Douglas ou Rick ao backend', () => {
