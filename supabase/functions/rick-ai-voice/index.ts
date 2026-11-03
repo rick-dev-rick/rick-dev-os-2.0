@@ -62,38 +62,76 @@ async function transcribe(body: any, apiKey: string) {
   return json({ mode: 'transcribe', transcript });
 }
 
+
+function pcmToWavBase64(pcmBase64: string) {
+  const pcm = decodeBase64(pcmBase64);
+  if (pcm.byteLength > 5_000_000) throw new Error('Audio response too long.');
+  const wav = new Uint8Array(44 + pcm.length);
+  const view = new DataView(wav.buffer);
+  const ascii = (offset: number, value: string) => {
+    for (let i = 0; i < value.length; i++) wav[offset + i] = value.charCodeAt(i);
+  };
+  ascii(0, 'RIFF');
+  view.setUint32(4, 36 + pcm.length, true);
+  ascii(8, 'WAVE');
+  ascii(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, 24000, true);
+  view.setUint32(28, 48000, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  ascii(36, 'data');
+  view.setUint32(40, pcm.length, true);
+  wav.set(pcm, 44);
+  let result = '';
+  for (let i = 0; i < wav.length; i += 16384) {
+    result += String.fromCharCode(...wav.subarray(i, i + 16384));
+  }
+  return btoa(result);
+}
+
 async function speak(body: any, apiKey: string) {
   const text = typeof body?.text === 'string' ? body.text.trim() : '';
-  if (!text || text.length > 4000) return json({ error: 'Invalid speech text.' }, 400);
-
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  if (!text || text.length > 1000) return json({ error: 'Fala inválida ou muito longa (máximo 1000 caracteres).' }, 400);
+  const model = Deno.env.get('GEMINI_TTS_MODEL') || 'gemini-3.8-flash-lite-tts';
+  const voice = Deno.env.get('RICK_AI_TTS_VOICE') || 'Gacrux';
+  const prompt = [
+    'Leia EXATAMENTE o texto seguinte em português brasileiro, sem acrescentar palavras.',
+    'Interpretação: mulher adulta, timbre médio-grave, tom calmo, inteligente, seguro,',
+    'ligeiramente seco, ironia sutil apenas onde couber; dicção limpa, sem soar robótica,',
+    'sem exageros dramáticos e sem imitar a voz de pessoa ou personagem específico.',
+    'Texto:',
+    text,
+  ].join('\n');
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
+    headers: { 'x-goog-api-key': apiKey, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'gpt-audio-1.5',
-      modalities: ['text', 'audio'],
-      audio: { voice: 'marin', format: 'wav' },
-      messages: [
-        {
-          role: 'system',
-          content: 'Fale em português brasileiro com voz feminina adulta, segura, sofisticada e natural, com calor moderado e leve ironia quando combinar. Não imite pessoas nem personagens e não acrescente conteúdo.',
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: {
+        responseModalities: ['AUDIO'],
+        speechConfig: {
+          voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } },
+          languageCode: 'pt-BR',
         },
-        { role: 'user', content: `Leia exatamente esta resposta da Rick IA:\n${text}` },
-      ],
-      store: false,
+      },
     }),
   });
-  if (!response.ok) return json({ error: 'Rick IA could not generate voice right now.' }, 502);
-
-  const payload = await response.json();
-  const audioBase64 = payload?.choices?.[0]?.message?.audio?.data;
-  if (typeof audioBase64 !== 'string' || !audioBase64) {
-    return json({ error: 'Rick IA returned an empty voice response.' }, 502);
+  if (!response.ok) {
+    const detail = await response.text();
+    console.error('Gemini TTS error', response.status, detail.slice(0, 700));
+    if (response.status === 429) return json({ error: 'Limite gratuito de voz do Gemini atingido.' }, 429);
+    if (response.status === 404) return json({ error: 'Modelo de voz do Gemini indisponível. Ajustar GEMINI_TTS_MODEL.' }, 502);
+    if ([500, 502, 503, 504].includes(response.status)) return json({ error: 'O serviço de voz do Gemini está temporariamente indisponível.' }, 503);
+    return json({ error: 'O Gemini não conseguiu gerar a voz.' }, 502);
   }
-  return json({ mode: 'speak', audioBase64, mimeType: 'audio/wav' });
+  const data = await response.json();
+  const parts = data?.candidates?.[0]?.content?.parts || [];
+  const audio = parts.find((part: any) => part?.inlineData?.data && String(part.inlineData.mimeType || '').startsWith('audio/'));
+  if (!audio) return json({ error: 'O Gemini não retornou áudio.' }, 502);
+  return json({ mode: 'speak', audioBase64: pcmToWavBase64(audio.inlineData.data), mimeType: 'audio/wav' });
 }
 
 Deno.serve(async (req: Request) => {
@@ -121,12 +159,13 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
     if (adminError || !admin) return json({ error: 'Admin access required.' }, 403);
 
-    const openAiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAiKey) return json({ error: 'Rick IA provider is not configured yet.' }, 503);
-
     const body = await req.json();
-    if (body?.mode === 'transcribe') return await transcribe(body, openAiKey);
-    if (body?.mode === 'speak') return await speak(body, openAiKey);
+    if (body?.mode === 'speak') {
+      const geminiKey = Deno.env.get('GEMINI_API_KEY');
+      if (!geminiKey) return json({ error: 'GEMINI_API_KEY não configurada.' }, 503);
+      return await speak(body, geminiKey);
+    }
+    if (body?.mode === 'transcribe') return json({ error: 'Use o ditado do navegador. A transcrição por API está desativada.' }, 501);
     return json({ error: 'Invalid voice mode.' }, 400);
   } catch (error) {
     console.error(error);
