@@ -102,11 +102,11 @@ async function speak(body: any, apiKey: string) {
     method: 'POST',
     headers: { 'x-goog-api-key': apiKey, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      contents: [{ role: 'user', parts: [{ text }] }],
+      contents: [{ role: 'user', parts: [{ text, speech_metadata: { style: 'Calm, composed and sophisticated Brazilian Portuguese adult feminine voice, subtle dry wit, natural rhythm and clear diction.' } }] }],
       generationConfig: {
         responseModalities: ['AUDIO'],
         speechConfig: {
-          voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } },
+          voiceConfig: { voice },
           languageCode: 'pt-BR',
         },
       },
@@ -124,7 +124,18 @@ async function speak(body: any, apiKey: string) {
   const parts = data?.candidates?.[0]?.content?.parts || [];
   const audio = parts.find((part: any) => part?.inlineData?.data && String(part.inlineData.mimeType || '').startsWith('audio/'));
   if (!audio) return json({ error: 'O Gemini não retornou áudio.' }, 502);
-  return json({ mode: 'speak', audioBase64: pcmToWavBase64(audio.inlineData.data), mimeType: 'audio/wav' });
+  // Gemini 3.8 unstreamed TTS already returns a complete RIFF/WAV.
+  const raw = decodeBase64(audio.inlineData.data);
+  const isWave = raw.length > 44 &&
+    String.fromCharCode(...raw.subarray(0, 4)) === 'RIFF' &&
+    String.fromCharCode(...raw.subarray(8, 12)) === 'WAVE';
+  const mimeType = String(audio.inlineData.mimeType || '').toLowerCase();
+  if (!isWave && !mimeType.includes('l16') && !mimeType.includes('pcm')) {
+    console.error('Unsupported Gemini TTS audio format', mimeType, raw.byteLength);
+    return json({ error: 'Formato de áudio inesperado do Gemini.' }, 502);
+  }
+  const audioBase64 = isWave ? audio.inlineData.data : pcmToWavBase64(audio.inlineData.data);
+  return json({ mode: 'speak', audioBase64, mimeType: 'audio/wav' });
 }
 
 Deno.serve(async (req: Request) => {
