@@ -195,11 +195,31 @@ Deno.serve(async (req: Request) => {
       await new Promise((resolve) => setTimeout(resolve, 800 * (attempt + 1)));
       aiResponse = await fetch(providerRequest.clone());
     }
+    // Try a separate lightweight model pool when the primary model is overloaded.
+    if ([500, 502, 503, 504].includes(aiResponse.status)) {
+      await aiResponse.text();
+      const fallbackModel = 'gemini-3.5-flash-lite';
+      const fallbackBody = JSON.parse(await providerRequest.clone().text());
+      delete fallbackBody.generationConfig.thinkingConfig;
+      const fallbackRequest = new Request(
+        `https://generativelanguage.googleapis.com/v1beta/models/${fallbackModel}:generateContent`,
+        { method: 'POST', headers: { 'x-goog-api-key': geminiKey, 'Content-Type': 'application/json' }, body: JSON.stringify(fallbackBody) },
+      );
+      aiResponse = await fetch(fallbackRequest.clone());
+      if ([500, 502, 503, 504].includes(aiResponse.status)) {
+        await aiResponse.text();
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        aiResponse = await fetch(fallbackRequest.clone());
+      }
+    }
     if (!aiResponse.ok) {
       const detail = await aiResponse.text();
       console.error('Gemini error', aiResponse.status, detail.slice(0, 1000));
-      if (aiResponse.status === 429) return json({ message: 'Bati no limite gratuito do Gemini agora 😵‍💫. Tenta mais tarde.', pendingAction: null, providerLimited: true });
-      return json({ error: 'A Rick IA não conseguiu responder pelo Gemini.' }, 502);
+      if (aiResponse.status === 429) return json({ message: 'O Gemini atingiu o limite temporário de uso. Tente novamente mais tarde.', pendingAction: null, providerLimited: true });
+      if (aiResponse.status === 503) return json({ error: 'O Google Gemini está sobrecarregado. Tente novamente em alguns minutos.' }, 503);
+      if (aiResponse.status === 404) return json({ error: 'Modelo Gemini indisponível. Verifique os modelos configurados.' }, 502);
+      if (aiResponse.status === 400) return json({ error: 'A solicitação não foi aceita pelo Gemini. O formato de resposta precisa de ajuste.' }, 502);
+      return json({ error: 'Não foi possível obter resposta do Gemini neste momento.' }, 502);
     }
     const payload = await aiResponse.json();
     const text = extractGeminiText(payload);
